@@ -1132,3 +1132,201 @@ html, body {
   align-items: center;
   gap: 4px;
 }
+
+/* Minimal Alarm Action Sheet */
+.bottom-sheet.minimal-alarm-sheet {
+  max-width: 440px;
+  border-radius: 20px 20px 0 0;
+  padding: 10px 16px calc(var(--safe-bottom) + 14px);
+  overflow-y: visible;
+  margin: 0 auto;
+}
+
+.minimal-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.alarm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.alarm-title-group .target-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-chip-compact {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.status-chip-compact.normal {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-chip-compact.testing {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  animation: pulseSlow 0.8s infinite alternate;
+}
+
+.status-chip-compact.active {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  animation: pulseFast 0.5s infinite alternate;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon-subtle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-subtle:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.minimal-alarm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Minimal Ping Button */
+.btn-ping-minimal {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ping-minimal:active {
+  transform: scale(0.98);
+  background: rgba(245, 158, 11, 0.25);
+}
+
+/* Minimal Hazard 2x3 Grid */
+.minimal-hazard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.minimal-hazard-grid .hazard-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  min-height: 44px;
+}
+
+.minimal-hazard-grid .hazard-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.minimal-hazard-grid .hazard-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.minimal-hazard-grid .hazard-btn:last-child {
+  grid-column: span 1;
+}
+
+/* Minimal Stop Button */
+.btn-stop-minimal {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  min-height: 44px;
+}
+
+.btn-stop-minimal .hazard-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.btn-stop-minimal .hazard-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f87171;
+}
+
+.btn-stop-minimal:hover,
+.btn-stop-minimal:active {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  transform: scale(0.97);
+}
+
+@media (min-width: 600px) {
+  .modal-backdrop {
+    align-items: center;
+  }
+  .bottom-sheet {
+    border-radius: 20px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 0 !important;
+  }
+}

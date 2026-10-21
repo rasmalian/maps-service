@@ -519,14 +519,14 @@ function updateAlarmStatusChip(marker, statusEl) {
   if (!statusEl) return;
 
   if (marker.status === 'active') {
-    statusEl.className = 'status-chip active';
-    statusEl.textContent = `🚨 ALARM AKTIF: ${getHazardLabel(marker.activeHazard).toUpperCase()}`;
+    statusEl.className = 'status-chip-compact active';
+    statusEl.textContent = `🚨 ${getHazardLabel(marker.activeHazard).toUpperCase()}`;
   } else if (marker.status === 'testing') {
-    statusEl.className = 'status-chip testing';
-    statusEl.textContent = '⚠️ STATUS: SEDANG PING / TEST';
+    statusEl.className = 'status-chip-compact testing';
+    statusEl.textContent = '⚠️ PING TEST';
   } else {
-    statusEl.className = 'status-chip normal';
-    statusEl.textContent = '✓ Status: Standby (Normal)';
+    statusEl.className = 'status-chip-compact normal';
+    statusEl.textContent = 'Standby';
   }
 }
 
@@ -823,6 +823,12 @@ function setupEventListeners() {
   });
 
   // Alarm Modal Controls
+  const alarmModal = document.getElementById('alarmModal');
+  if (alarmModal) {
+    alarmModal.addEventListener('click', (e) => {
+      if (e.target === alarmModal) closeAlarmModal();
+    });
+  }
   document.getElementById('btnCloseAlarmModal').addEventListener('click', closeAlarmModal);
   document.getElementById('btnPingAlarm').addEventListener('click', triggerPingTest);
   document.getElementById('btnStopAlarm').addEventListener('click', () => {

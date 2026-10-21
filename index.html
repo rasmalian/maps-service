@@ -95,93 +95,71 @@
       </button>
     </div>
 
-    <!-- Bottom Sheet / Modal: Alarm Action Sheet -->
+    <!-- Bottom Sheet / Modal: Minimal Action Panel Alarm -->
     <div id="alarmModal" class="modal-backdrop hidden">
-      <div class="bottom-sheet">
+      <div class="bottom-sheet minimal-alarm-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <div class="badge-type alarm">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            Marker Alarm
+
+        <!-- Header Ringkas: Nama & Tombol Aksi Kanan -->
+        <div class="minimal-sheet-header">
+          <div class="alarm-title-group">
+            <h3 class="target-name" id="alarmModalName">Pos Alarm</h3>
+            <span id="alarmStatusBadge" class="status-chip-compact normal">Standby</span>
+            <span id="alarmModalCoords" style="display:none;"></span>
           </div>
-          <button class="btn-close-modal" id="btnCloseAlarmModal">&times;</button>
+          <div class="header-actions">
+            <button id="btnDeleteAlarmMarker" class="btn-icon-subtle" title="Hapus Marker Ini">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <button class="btn-close-modal" id="btnCloseAlarmModal">&times;</button>
+          </div>
         </div>
 
-        <div class="sheet-body">
-          <h2 class="target-name" id="alarmModalName">Pos Alarm Blok A</h2>
-          <p class="target-coords" id="alarmModalCoords">-6.20000, 106.81666</p>
-          <div id="alarmStatusBadge" class="status-chip normal">Status: Standby (Normal)</div>
+        <!-- Tombol-tombol Langsung Tanpa Teks Panjang -->
+        <div class="minimal-alarm-body">
+          <!-- Tombol Ping Test -->
+          <button id="btnPingAlarm" class="btn-ping-minimal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <span>Uji Bip (Ping 3 Detik)</span>
+          </button>
 
-          <div class="section-divider"></div>
-
-          <!-- Section 1: Ping / Test Alarm -->
-          <div class="action-card ping-card">
-            <div class="action-card-info">
-              <h3>Uji Sirine (Ping Test)</h3>
-              <p>Membunyikan nada bip selama 3 detik untuk mengecek fungsi audio tanpa memicu status darurat.</p>
-            </div>
-            <button id="btnPingAlarm" class="btn-action btn-ping">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-              </svg>
-              <span>Ping / Test (3 Detik)</span>
+          <!-- 6 Tombol Bahaya & Stop (Grid 2 Kolom) -->
+          <div class="minimal-hazard-grid">
+            <button class="hazard-btn hazard-animal" data-hazard="wild_animal" data-title="Hewan Liar">
+              <span class="hazard-icon">🐗</span>
+              <span class="hazard-label">Hewan Liar</span>
             </button>
-          </div>
 
-          <!-- Section 2: 5 Hazard Emergency Alarms -->
-          <div class="hazard-section">
-            <h3>Nyalakan Alarm Bahaya</h3>
-            <p class="section-subtext">Pilih kategori bahaya darurat untuk membunyikan sirine peringatan perumahan:</p>
-
-            <div class="hazard-grid">
-              <!-- 1. Hewan Liar -->
-              <button class="hazard-btn hazard-animal" data-hazard="wild_animal" data-title="Hewan Liar">
-                <span class="hazard-icon">🐗</span>
-                <span class="hazard-label">Hewan Liar</span>
-              </button>
-
-              <!-- 2. Kebakaran -->
-              <button class="hazard-btn hazard-fire" data-hazard="fire" data-title="Kebakaran">
-                <span class="hazard-icon">🔥</span>
-                <span class="hazard-label">Kebakaran</span>
-              </button>
-
-              <!-- 3. Kebanjiran -->
-              <button class="hazard-btn hazard-flood" data-hazard="flood" data-title="Kebanjiran">
-                <span class="hazard-icon">🌊</span>
-                <span class="hazard-label">Kebanjiran</span>
-              </button>
-
-              <!-- 4. Pencurian -->
-              <button class="hazard-btn hazard-theft" data-hazard="theft" data-title="Pencurian">
-                <span class="hazard-icon">🥷</span>
-                <span class="hazard-label">Pencurian</span>
-              </button>
-
-              <!-- 5. Bahaya Lain -->
-              <button class="hazard-btn hazard-other" data-hazard="other" data-title="Bahaya Lain">
-                <span class="hazard-icon">⚠️</span>
-                <span class="hazard-label">Bahaya Lain</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Stop Alarm Button (shown when active) -->
-          <div class="stop-alarm-wrap" id="stopAlarmWrap">
-            <button id="btnStopAlarm" class="btn-stop-alarm">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="6" y="6" width="12" height="12"></rect>
-              </svg>
-              Hentikan Alarm Ini
+            <button class="hazard-btn hazard-fire" data-hazard="fire" data-title="Kebakaran">
+              <span class="hazard-icon">🔥</span>
+              <span class="hazard-label">Kebakaran</span>
             </button>
-          </div>
 
-          <div class="delete-marker-wrap">
-            <button id="btnDeleteAlarmMarker" class="btn-delete-text">Hapus Marker Ini</button>
+            <button class="hazard-btn hazard-flood" data-hazard="flood" data-title="Kebanjiran">
+              <span class="hazard-icon">🌊</span>
+              <span class="hazard-label">Kebanjiran</span>
+            </button>
+
+            <button class="hazard-btn hazard-theft" data-hazard="theft" data-title="Pencurian">
+              <span class="hazard-icon">🥷</span>
+              <span class="hazard-label">Pencurian</span>
+            </button>
+
+            <button class="hazard-btn hazard-other" data-hazard="other" data-title="Bahaya Lain">
+              <span class="hazard-icon">⚠️</span>
+              <span class="hazard-label">Bahaya Lain</span>
+            </button>
+
+            <button id="btnStopAlarm" class="btn-stop-minimal">
+              <span class="hazard-icon">⏹️</span>
+              <span class="hazard-label">Matikan Sirine</span>
+            </button>
           </div>
         </div>
       </div>
