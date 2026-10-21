@@ -76,7 +76,8 @@
 
     <!-- Instruction Floating Badge when in Add-Marker Mode -->
     <div id="crosshairGuide" class="crosshair-guide hidden">
-      <span>🎯 Sentuh titik di peta untuk meletakkan marker baru</span>
+      <span>🎯 Sentuh titik di peta untuk meletakkan marker</span>
+      <button id="btnManualCoord" class="btn-manual-coord" type="button" style="background:#2563eb; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; margin-left:8px; font-weight:600;">Input Koordinat</button>
       <button id="btnCancelAddMode" class="btn-cancel-mini">&times;</button>
     </div>
 
@@ -292,9 +293,18 @@
             </select>
           </div>
 
-          <div class="form-coords-display">
-            <span>Koordinat terpilih:</span>
-            <strong id="displaySelectedCoords">-6.20000, 106.81666</strong>
+          <div class="form-group" style="margin-top: 10px;">
+            <label>Titik Koordinat (Bisa diketik / paste):</label>
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <div style="flex: 1;">
+                <label for="markerLat" style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 3px;">Latitude:</label>
+                <input type="number" step="any" id="markerLat" required placeholder="-7.050..." style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 13px; font-family: monospace;">
+              </div>
+              <div style="flex: 1;">
+                <label for="markerLng" style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 3px;">Longitude:</label>
+                <input type="number" step="any" id="markerLng" required placeholder="110.48..." style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 13px; font-family: monospace;">
+              </div>
+            </div>
           </div>
 
           <div class="dialog-actions">

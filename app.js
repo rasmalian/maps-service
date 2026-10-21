@@ -4,48 +4,86 @@
  */
 
 // --- Default Configuration & State ---
-const DEFAULT_COORDS = [-6.2088, 106.8456]; // Jakarta / Perumahan Center Sample
-const DEFAULT_ZOOM = 16;
-const STORAGE_KEY = 'perumahan_map_markers_v1';
+const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
+const DEFAULT_ZOOM = 17;
+const STORAGE_KEY = 'perumahan_map_markers_v2';
 
-// Initial Demo Markers if user has fresh local storage
+// Initial Markers
 const INITIAL_DEMO_MARKERS = [
   {
-    id: 'm_alarm_pos_utama',
+    id: 'm_alarm_1',
     type: 'alarm',
-    name: 'Pos Satpam Gerbang Utama',
-    lat: -6.2085,
-    lng: 106.8445,
-    status: 'idle', // 'idle' | 'testing' | 'active'
-    activeHazard: null,
-    createdAt: Date.now()
-  },
-  {
-    id: 'm_cctv_gerbang',
-    type: 'cctv',
-    name: 'CCTV Gerbang Masuk & Keluar',
-    lat: -6.2082,
-    lng: 106.8447,
-    preset: 'gate',
-    createdAt: Date.now()
-  },
-  {
-    id: 'm_alarm_taman',
-    type: 'alarm',
-    name: 'Alarm Darurat Blok B & Taman',
-    lat: -6.2094,
-    lng: 106.8465,
+    name: 'Alarm Titik 1',
+    lat: -7.050423194247873,
+    lng: 110.48430984799066,
     status: 'idle',
     activeHazard: null,
     createdAt: Date.now()
   },
   {
-    id: 'm_cctv_lapangan',
+    id: 'm_cctv_1',
     type: 'cctv',
-    name: 'CCTV Pertigaan Lapangan Warga',
-    lat: -6.2091,
-    lng: 106.8472,
+    name: 'CCTV Titik 1',
+    lat: -7.050423194247873,
+    lng: 110.48433984799066, // Diberi offset ~3m agar tidak bertumpuk persis dengan Alarm Titik 1 sehingga dua-duanya mudah diklik
+    preset: 'gate',
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_alarm_2',
+    type: 'alarm',
+    name: 'Alarm Titik 2',
+    lat: -7.050437072530633,
+    lng: 110.48491388759022,
+    status: 'idle',
+    activeHazard: null,
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_alarm_3',
+    type: 'alarm',
+    name: 'Alarm Titik 3',
+    lat: -7.051005204245323,
+    lng: 110.48481366638987,
+    status: 'idle',
+    activeHazard: null,
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_alarm_4',
+    type: 'alarm',
+    name: 'Alarm Titik 4',
+    lat: -7.051349569340888,
+    lng: 110.48230923057393,
+    status: 'idle',
+    activeHazard: null,
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_cctv_2',
+    type: 'cctv',
+    name: 'CCTV Titik 2',
+    lat: -7.050783253591908,
+    lng: 110.48299489036295,
     preset: 'street',
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_cctv_3',
+    type: 'cctv',
+    name: 'CCTV Titik 3',
+    lat: -7.0507205782913696,
+    lng: 110.4842308823787,
+    preset: 'corner',
+    createdAt: Date.now()
+  },
+  {
+    id: 'm_cctv_4',
+    type: 'cctv',
+    name: 'CCTV Titik 4',
+    lat: -7.050418393665095,
+    lng: 110.48485564474373,
+    preset: 'gate',
     createdAt: Date.now()
   }
 ];
@@ -599,13 +637,18 @@ function onMapClick(e) {
 
 function openAddMarkerDialog(latlng) {
   const modal = document.getElementById('addMarkerModal');
-  const coordsDisplay = document.getElementById('displaySelectedCoords');
+  const latInput = document.getElementById('markerLat');
+  const lngInput = document.getElementById('markerLng');
   const form = document.getElementById('addMarkerForm');
   form.reset();
 
-  coordsDisplay.textContent = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
-  selectMarkerTypeInForm('alarm');
+  if (latlng) {
+    state.selectedLatLng = latlng;
+    if (latInput) latInput.value = latlng.lat;
+    if (lngInput) lngInput.value = latlng.lng;
+  }
 
+  selectMarkerTypeInForm('alarm');
   modal.classList.remove('hidden');
 }
 
@@ -725,6 +768,15 @@ function setupEventListeners() {
   document.getElementById('btnAddMarker').addEventListener('click', startAddMarkerMode);
   document.getElementById('btnCancelAddMode').addEventListener('click', cancelAddMarkerMode);
 
+  const btnManualCoord = document.getElementById('btnManualCoord');
+  if (btnManualCoord) {
+    btnManualCoord.addEventListener('click', () => {
+      cancelAddMarkerMode();
+      const center = state.map.getCenter();
+      openAddMarkerDialog({ lat: center.lat, lng: center.lng });
+    });
+  }
+
   // Add Marker Dialog
   document.getElementById('btnCloseAddModal').addEventListener('click', closeAddMarkerDialog);
   document.getElementById('btnCancelAdd').addEventListener('click', closeAddMarkerDialog);
@@ -733,18 +785,24 @@ function setupEventListeners() {
 
   document.getElementById('addMarkerForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    if (!state.selectedLatLng) return;
 
     const name = document.getElementById('markerName').value.trim();
     const type = document.querySelector('input[name="markerType"]:checked').value;
     const cctvPreset = document.getElementById('cctvChannel').value;
+    const latVal = parseFloat(document.getElementById('markerLat').value);
+    const lngVal = parseFloat(document.getElementById('markerLng').value);
+
+    if (isNaN(latVal) || isNaN(lngVal)) {
+      alert('Koordinat latitude atau longitude tidak valid.');
+      return;
+    }
 
     const newMarker = {
       id: 'm_' + Date.now(),
       type: type,
       name: name,
-      lat: state.selectedLatLng.lat,
-      lng: state.selectedLatLng.lng,
+      lat: latVal,
+      lng: lngVal,
       createdAt: Date.now()
     };
 
