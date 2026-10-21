@@ -6,7 +6,7 @@
 // --- Default Configuration & State ---
 const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
 const DEFAULT_ZOOM = 17;
-const STORAGE_KEY = 'perumahan_map_markers_v2';
+const STORAGE_KEY = 'klipang_green_2_markers_v1';
 
 // Initial Markers
 const INITIAL_DEMO_MARKERS = [

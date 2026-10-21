@@ -1,6 +1,6 @@
-# Smart Perumahan - Map Monitor Service
+# Klipang Green 2 - Map Monitor Service
 
-Aplikasi peta monitoring lingkungan perumahan berbasis web yang mobile-friendly, tanpa dependensi build tools atau API Key eksternal (menggunakan OpenStreetMap via Leaflet).
+Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-friendly, tanpa dependensi build tools atau API Key eksternal (menggunakan OpenStreetMap via Leaflet).
 
 ## Fitur Utama
 
