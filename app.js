@@ -6,7 +6,7 @@
 // --- Default Configuration & State ---
 const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
 const DEFAULT_ZOOM = 17;
-const STORAGE_KEY = 'klipang_green_2_markers_v1';
+const STORAGE_KEY = 'klipang_green_2_markers_v2';
 
 // Initial Markers
 const INITIAL_DEMO_MARKERS = [
@@ -37,7 +37,11 @@ const INITIAL_DEMO_MARKERS = [
     lng: 110.48491388759022,
     status: 'idle',
     activeHazard: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    webhooks: {
+      ping: 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=20',
+      stop: 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=101'
+    }
   },
   {
     id: 'm_alarm_3',
@@ -541,10 +545,84 @@ function getHazardLabel(type) {
   }
 }
 
+// --- Webhook & Notification System ---
+let toastTimeout = null;
+function showToast(message, icon = '📡') {
+  const toast = document.getElementById('toastNotification');
+  const msgEl = document.getElementById('toastMessage');
+  const iconEl = document.getElementById('toastIcon');
+  if (!toast) return;
+
+  if (msgEl) msgEl.textContent = message;
+  if (iconEl) iconEl.textContent = icon;
+  toast.classList.remove('hidden');
+  toast.style.opacity = '1';
+
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 2800);
+}
+
+function getMarkerWebhook(marker, action) {
+  if (!marker) return null;
+  if (marker.webhooks && marker.webhooks[action]) {
+    return marker.webhooks[action];
+  }
+  // Fallback match khusus Titik 2
+  const isTitik2 = marker.id === 'm_alarm_2' || (marker.name && marker.name.toLowerCase().includes('titik 2'));
+  if (isTitik2) {
+    if (action === 'ping') {
+      return 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=20';
+    }
+    if (action === 'stop') {
+      return 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=101';
+    }
+  }
+  return null;
+}
+
+async function sendWebhookRequest(url, actionDesc) {
+  if (!url) return;
+  console.log(`[Webhook] Mengirim request (${actionDesc}):`, url);
+  showToast(`Mengirim sinyal ${actionDesc}...`, '⏳');
+
+  try {
+    const res = await fetch(url, { method: 'GET', mode: 'cors' });
+    if (res.ok) {
+      console.log(`[Webhook] Berhasil: ${actionDesc}`);
+      showToast(`Sinyal ${actionDesc} terkirim ke Telegram`, '✅');
+      return true;
+    } else {
+      console.warn(`[Webhook] Respon Telegram: ${res.status}`);
+      showToast(`Sinyal ${actionDesc} terkirim (Status: ${res.status})`, '⚠️');
+      return false;
+    }
+  } catch (err) {
+    console.warn(`[Webhook] Fetch CORS terhambat, mencoba mode no-cors:`, err);
+    try {
+      await fetch(url, { method: 'GET', mode: 'no-cors' });
+      showToast(`Sinyal ${actionDesc} terkirim ke Telegram`, '📡');
+      return true;
+    } catch (e) {
+      console.error(`[Webhook] Gagal:`, e);
+      showToast(`Gagal mengirim ke Telegram: ${e.message}`, '❌');
+      return false;
+    }
+  }
+}
+
 function triggerPingTest() {
   if (!state.activeAlarmMarkerId) return;
   const marker = state.markers.find(m => m.id === state.activeAlarmMarkerId);
   if (!marker) return;
+
+  // Cek apakah marker memiliki webhook ping (misal: Titik 2 -> title=20)
+  const pingUrl = getMarkerWebhook(marker, 'ping');
+  if (pingUrl) {
+    sendWebhookRequest(pingUrl, 'Ping Titik 2 (title=20)');
+  }
 
   marker.status = 'testing';
   updateMarkerDisplay(marker.id);
@@ -582,6 +660,12 @@ function stopCurrentAlarm() {
   if (!state.activeAlarmMarkerId) return;
   const marker = state.markers.find(m => m.id === state.activeAlarmMarkerId);
   if (!marker) return;
+
+  // Cek apakah marker memiliki webhook stop (misal: Titik 2 -> title=101)
+  const stopUrl = getMarkerWebhook(marker, 'stop');
+  if (stopUrl) {
+    sendWebhookRequest(stopUrl, 'Matikan Sirine Titik 2 (title=101)');
+  }
 
   marker.status = 'idle';
   marker.activeHazard = null;
@@ -856,6 +940,12 @@ function setupEventListeners() {
   document.getElementById('btnMuteGlobal').addEventListener('click', () => {
     state.markers.forEach(m => {
       if (m.type === 'alarm') {
+        if (m.status === 'active') {
+          const stopUrl = getMarkerWebhook(m, 'stop');
+          if (stopUrl) {
+            sendWebhookRequest(stopUrl, `Matikan Sirine ${m.name} (title=101)`);
+          }
+        }
         m.status = 'idle';
         m.activeHazard = null;
       }
