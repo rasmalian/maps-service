@@ -6,7 +6,7 @@
 // --- Default Configuration & State ---
 const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
 const DEFAULT_ZOOM = 17;
-const STORAGE_KEY = 'klipang_green_2_markers_v2';
+const STORAGE_KEY = 'klipang_green_2_markers_v3';
 
 // Initial Markers
 const INITIAL_DEMO_MARKERS = [
@@ -32,7 +32,7 @@ const INITIAL_DEMO_MARKERS = [
   {
     id: 'm_alarm_2',
     type: 'alarm',
-    name: 'Alarm Titik 2',
+    name: 'Alarm Safir 3',
     lat: -7.050437072530633,
     lng: 110.48491388759022,
     status: 'idle',
@@ -570,9 +570,9 @@ function getMarkerWebhook(marker, action) {
   if (marker.webhooks && marker.webhooks[action]) {
     return marker.webhooks[action];
   }
-  // Fallback match khusus Titik 2
-  const isTitik2 = marker.id === 'm_alarm_2' || (marker.name && marker.name.toLowerCase().includes('titik 2'));
-  if (isTitik2) {
+  // Fallback match khusus Alarm Safir 3 / Titik 2
+  const isSafir3 = marker.id === 'm_alarm_2' || (marker.name && (marker.name.toLowerCase().includes('safir 3') || marker.name.toLowerCase().includes('titik 2')));
+  if (isSafir3) {
     if (action === 'ping') {
       return 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=20';
     }
@@ -618,10 +618,10 @@ function triggerPingTest() {
   const marker = state.markers.find(m => m.id === state.activeAlarmMarkerId);
   if (!marker) return;
 
-  // Cek apakah marker memiliki webhook ping (misal: Titik 2 -> title=20)
+  // Cek apakah marker memiliki webhook ping (misal: Safir 3 -> title=20)
   const pingUrl = getMarkerWebhook(marker, 'ping');
   if (pingUrl) {
-    sendWebhookRequest(pingUrl, 'Ping Titik 2 (title=20)');
+    sendWebhookRequest(pingUrl, `Ping ${marker.name} (title=20)`);
   }
 
   marker.status = 'testing';
@@ -661,10 +661,10 @@ function stopCurrentAlarm() {
   const marker = state.markers.find(m => m.id === state.activeAlarmMarkerId);
   if (!marker) return;
 
-  // Cek apakah marker memiliki webhook stop (misal: Titik 2 -> title=101)
+  // Cek apakah marker memiliki webhook stop (misal: Safir 3 -> title=101)
   const stopUrl = getMarkerWebhook(marker, 'stop');
   if (stopUrl) {
-    sendWebhookRequest(stopUrl, 'Matikan Sirine Titik 2 (title=101)');
+    sendWebhookRequest(stopUrl, `Matikan Sirine ${marker.name} (title=101)`);
   }
 
   marker.status = 'idle';
