@@ -39,8 +39,8 @@ const INITIAL_DEMO_MARKERS = [
     activeHazard: null,
     createdAt: Date.now(),
     webhooks: {
-      ping: 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=20',
-      stop: 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=101'
+      ping: 'https://api.telegram.org/bot72912b_Yo6s/setChatTitle?chat_id=-4879338&title=20',
+      stop: 'https://api.telegram.org/bot7291/setChatTitle?chat_id=-48738&title=101'
     }
   },
   {
