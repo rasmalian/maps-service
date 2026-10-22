@@ -7,6 +7,7 @@
 const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
 const DEFAULT_ZOOM = 17;
 const STORAGE_KEY = 'klipang_green_2_markers_v5';
+const UMKM_STORAGE_KEY = 'klipang_green_2_umkm_v2';
 const TELEGRAM_WORKER_URL = 'https://summer-rt9.demigod1337.workers.dev';
 const UMKM_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwPvPOxQ_soVSSm5_28XLxcraEI-GEdaz2hnP_1AFuJszeTzbTxBEzYtA4TJwA37EbF/exec';
 
@@ -103,6 +104,58 @@ const INITIAL_DEMO_MARKERS = [
     lng: 110.48485564474373,
     preset: 'gate',
     createdAt: Date.now()
+  }
+];
+
+// Initial Seed Data UMKM (Render instan 0ms tanpa menunggu jeda Google Apps Script)
+const INITIAL_DEMO_UMKM = [
+  {
+    id: 1,
+    nama_usaha: 'Dapur Bu',
+    kategori: 'kuliner',
+    deskripsi_menu: 'Nasi Ayam & Aneka Menu Masakan',
+    no_wa: '62812345678',
+    foto_url: 'https://kadarland.com/wp-content/uploads/2025/01/Warung-Makan-instagram.com-temansocialspace.webp',
+    lat: -7.0502968502322,
+    lng: 110.484817016547,
+    status: 'buka',
+    promo: 'Diskon 10%'
+  },
+  {
+    id: 2,
+    nama_usaha: 'KG2',
+    kategori: 'laundry',
+    deskripsi_menu: 'Cuci Kilat & Kiloan',
+    no_wa: '62898765432',
+    foto_url: 'https://casaindonesia.com/lkgallery/images/ibjido_ruang_laundry_4.jpg',
+    lat: -7.0502968502322,
+    lng: 110.484817016547,
+    status: 'buka',
+    promo: 'Gratis Antar Jemput'
+  },
+  {
+    id: 3,
+    nama_usaha: 'Warung',
+    kategori: 'toko',
+    deskripsi_menu: 'Sembako, Gas & Galon',
+    no_wa: '62811223344',
+    foto_url: 'https://cdn0-production-images-kly.akamaized.net/Frrg5nVBHJ2jG03fZViZzPmTgao=/500x500/smart/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/5369830/original/057638400_1759480731-toko_sembako_di_perumahan.jpg',
+    lat: -7.0502968502322,
+    lng: 110.484817016547,
+    status: 'buka',
+    promo: 'Siap Kirim Cepat'
+  },
+  {
+    id: 4,
+    nama_usaha: 'Kopi Warga',
+    kategori: 'kuliner',
+    deskripsi_menu: 'Kopi Susu Gula Aren',
+    no_wa: '62877112233',
+    foto_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGiyEj-yIFT4bAf_LNjXKxuC_Rq8VeR9eDHacyDM9fdIfnhvcvWE1nnE3A&s=10',
+    lat: -7.0502968502322,
+    lng: 110.484817016547,
+    status: 'tutup',
+    promo: 'Promo Beli 2 Gratis 1'
   }
 ];
 
@@ -287,6 +340,32 @@ function loadMarkers() {
   } catch (e) {
     state.markers = JSON.parse(JSON.stringify(INITIAL_DEMO_MARKERS));
   }
+  loadUmkmCache();
+}
+
+function loadUmkmCache() {
+  try {
+    const raw = localStorage.getItem(UMKM_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        state.umkmList = parsed;
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('[UMKM] Cache read error:', e);
+  }
+  // Fallback awal (instan 0ms) tanpa menunggu cold-start Google Apps Script
+  state.umkmList = JSON.parse(JSON.stringify(INITIAL_DEMO_UMKM));
+}
+
+function saveUmkmCache() {
+  try {
+    localStorage.setItem(UMKM_STORAGE_KEY, JSON.stringify(state.umkmList));
+  } catch (e) {
+    console.warn('[UMKM] Cache save error:', e);
+  }
 }
 
 function saveMarkers() {
@@ -319,8 +398,9 @@ function initMap() {
   // Map Click Listener (for adding markers)
   state.map.on('click', onMapClick);
 
-  // Render initial markers
+  // Render initial markers & instant UMKM layer (0ms)
   renderAllMarkers();
+  renderUmkmMarkers();
 }
 
 // --- Marker Renderers & Custom Icons ---
@@ -518,6 +598,7 @@ async function fetchUmkmData(isSilent = false) {
         const prevCount = state.umkmList.length;
         umkmLastJsonCache = newJsonStr;
         state.umkmList = json.data;
+        saveUmkmCache();
         renderUmkmMarkers();
         updateHeaderStats();
 
@@ -606,14 +687,29 @@ function closeUmkmModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+function focusUmkmOnMap() {
+  if (!state.map || state.umkmList.length === 0) return;
+  const first = state.umkmList[0];
+  const lat = normalizeCoord(first.lat, true) || DEFAULT_COORDS[0];
+  const lng = normalizeCoord(first.lng, false) || DEFAULT_COORDS[1];
+  state.map.flyTo([lat, lng], 18, { duration: 1 });
+}
+
 function toggleUmkmLayer() {
-  state.showUmkm = !state.showUmkm;
-  const btn = document.getElementById('btnToggleUmkm');
-  if (btn) {
-    btn.classList.toggle('active', state.showUmkm);
+  // Jika sedang aktif, klik tombol akan memusatkan kamera peta ke lokasi UMKM
+  if (state.showUmkm && state.umkmList.length > 0) {
+    focusUmkmOnMap();
+    showToast(`📍 Memusatkan ke ${state.umkmList.length} Gerai UMKM (Jl. Safir)`, '🛍️');
+    return;
   }
+
+  // Jika sedang tersembunyi, aktifkan kembali dan arahkan kamera
+  state.showUmkm = true;
+  const btn = document.getElementById('btnToggleUmkm');
+  if (btn) btn.classList.add('active');
   renderUmkmMarkers();
-  showToast(state.showUmkm ? 'Menampilkan UMKM & Kuliner' : 'Menyembunyikan UMKM & Kuliner', '🛍️');
+  focusUmkmOnMap();
+  showToast('Menampilkan UMKM & Kuliner', '🛍️');
 }
 
 function updateMarkerDisplay(markerId) {
@@ -1107,6 +1203,43 @@ function openListModal() {
         closeListModal();
         state.map.setView([marker.lat, marker.lng], 18);
         if (marker.type === 'alarm') openAlarmModal(marker.id);
+      };
+      listEl.appendChild(card);
+    });
+  }
+
+  // Tambahkan Section UMKM Warga
+  if (state.umkmList && state.umkmList.length > 0) {
+    const umkmHeader = document.createElement('div');
+    umkmHeader.style.cssText = 'padding: 12px 4px 6px; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 10px; display: flex; justify-content: space-between; align-items: center;';
+    umkmHeader.innerHTML = `<span>🛍️ Direktori UMKM & Kuliner (${state.umkmList.length})</span>`;
+    listEl.appendChild(umkmHeader);
+
+    state.umkmList.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'marker-item-card';
+      const cat = (item.kategori || '').toLowerCase();
+      let emoji = '🛍️';
+      if (cat.includes('kopi')) emoji = '☕';
+      else if (cat.includes('laundry')) emoji = '🧺';
+      else if (cat.includes('toko') || cat.includes('sembako')) emoji = '🏪';
+      else if (cat.includes('kuliner')) emoji = '🍔';
+
+      const isBuka = !String(item.status || item['stat…'] || '').toLowerCase().includes('tutup');
+
+      card.innerHTML = `
+        <div class="marker-item-info">
+          <strong>${emoji} ${item.nama_usaha || 'UMKM'}</strong>
+          <span>${(item.kategori || 'UMKM').toUpperCase()} &bull; ${isBuka ? '🟢 BUKA' : '🔴 TUTUP'} &bull; ${item.promo || 'Tersedia'}</span>
+        </div>
+        <button class="icon-btn" style="width:30px;height:30px;" title="Buka Profil">&rarr;</button>
+      `;
+      card.onclick = () => {
+        closeListModal();
+        const lat = normalizeCoord(item.lat, true) || DEFAULT_COORDS[0];
+        const lng = normalizeCoord(item.lng, false) || DEFAULT_COORDS[1];
+        state.map.flyTo([lat, lng], 18, { duration: 1 });
+        openUmkmModal(item);
       };
       listEl.appendChild(card);
     });
