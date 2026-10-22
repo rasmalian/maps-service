@@ -421,31 +421,34 @@ function normalizeCoord(val, isLat) {
 
 function createUmkmIcon(item) {
   const cat = (item.kategori || '').toLowerCase();
+  const name = (item.nama_usaha || '').toLowerCase();
+  const menu = (item.deskripsi_menu || '').toLowerCase();
   let emoji = '🛍️';
   let bgColor = '#6366f1'; // Indigo
 
-  if (cat.includes('kuliner') || cat.includes('makan') || cat.includes('food')) {
-    emoji = '🍔';
-    bgColor = '#f59e0b'; // Amber
-  } else if (cat.includes('laundry') || cat.includes('cuci')) {
-    emoji = '🧺';
-    bgColor = '#06b6d4'; // Cyan
-  } else if (cat.includes('toko') || cat.includes('sembako') || cat.includes('warung')) {
-    emoji = '🏪';
-    bgColor = '#10b981'; // Emerald
-  } else if (cat.includes('kopi') || cat.includes('kafe') || cat.includes('coffee')) {
+  if (cat.includes('kopi') || cat.includes('kafe') || cat.includes('coffee') || name.includes('kopi') || menu.includes('kopi')) {
     emoji = '☕';
     bgColor = '#8b5cf6'; // Violet
+  } else if (cat.includes('laundry') || cat.includes('cuci') || name.includes('laundry')) {
+    emoji = '🧺';
+    bgColor = '#06b6d4'; // Cyan
+  } else if (cat.includes('toko') || cat.includes('sembako') || cat.includes('warung') || name.includes('warung') || name.includes('toko')) {
+    emoji = '🏪';
+    bgColor = '#10b981'; // Emerald
+  } else if (cat.includes('kuliner') || cat.includes('makan') || cat.includes('food') || name.includes('dapur')) {
+    emoji = '🍔';
+    bgColor = '#f59e0b'; // Amber
   }
 
-  const isClosed = String(item.status || '').toLowerCase().includes('tutup');
+  const rawStatus = item.status || item['stat…'] || item['stat?'] || '';
+  const isClosed = String(rawStatus).toLowerCase().includes('tutup');
   const statusDotClass = isClosed ? 'umkm-status-dot closed' : 'umkm-status-dot';
 
   return L.divIcon({
     className: 'custom-leaflet-marker',
     html: `
       <div class="custom-pin">
-        <div class="umkm-pin-bubble" style="background: ${bgColor};">
+        <div class="umkm-pin-bubble" style="background: ${bgColor};" title="${item.nama_usaha || 'UMKM'}">
           <span>${emoji}</span>
           <span class="${statusDotClass}"></span>
         </div>
@@ -467,11 +470,28 @@ function renderUmkmMarkers() {
 
   if (!state.showUmkm) return;
 
-  state.umkmList.forEach(item => {
-    const lat = normalizeCoord(item.lat, true);
-    const lng = normalizeCoord(item.lng, false);
+  // Lacak koordinat kembar/tumpang-tindih agar tidak bertumpuk 100% pada 1 titik
+  const coordOccurrences = new Map();
+
+  state.umkmList.forEach((item, index) => {
+    let lat = normalizeCoord(item.lat, true);
+    let lng = normalizeCoord(item.lng, false);
 
     if (lat === null || lng === null) return;
+
+    // Kunci koordinat pembulatan ~1 meter
+    const coordKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    const duplicateCount = coordOccurrences.get(coordKey) || 0;
+    coordOccurrences.set(coordKey, duplicateCount + 1);
+
+    // Jika ada koordinat yang sama persis (misal di spreadsheet belum diubah titik lokasinya),
+    // berikan offset melingkar kecil (~8 meter) agar semua pin terlihat berdampingan
+    if (duplicateCount > 0) {
+      const angle = (duplicateCount * (2 * Math.PI / 4)) + (index * 0.4);
+      const radius = 0.000075 * Math.ceil(duplicateCount / 2);
+      lat += Math.sin(angle) * radius;
+      lng += Math.cos(angle) * radius;
+    }
 
     const marker = L.marker([lat, lng], { icon: createUmkmIcon(item) });
     marker.on('click', () => openUmkmModal(item));
@@ -533,7 +553,8 @@ function openUmkmModal(item) {
   catBadge.textContent = (item.kategori || 'UMKM').toUpperCase();
   catBadge.className = `umkm-cat-badge ${cat}`;
 
-  const isClosed = String(item.status || '').toLowerCase().includes('tutup');
+  const rawStatus = item.status || item['stat…'] || item['stat?'] || '';
+  const isClosed = String(rawStatus).toLowerCase().includes('tutup');
   const statusBadge = document.getElementById('umkmStatusBadge');
   if (isClosed) {
     statusBadge.className = 'status-chip-compact testing';
