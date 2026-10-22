@@ -31,11 +31,16 @@
         </div>
         <div>
           <h1 class="header-title" id="estateTitle">Klipang Green 2</h1>
-          <p class="header-subtitle"><span class="status-dot"></span> Sistem Aktif &bull; <span id="markerCountText">0 Marker</span></p>
+          <p class="header-subtitle"><span class="status-dot"></span> Sistem Aktif &bull; <span id="markerCountText">0 Marker</span> &bull; <span id="umkmCountText">0 UMKM</span></p>
         </div>
       </div>
 
       <div class="header-right">
+        <button id="btnToggleUmkm" class="icon-pill-btn active" title="Tampilkan/Sembunyikan UMKM & Kuliner" aria-label="Toggle UMKM">
+          <span class="pill-icon">🛍️</span>
+          <span class="pill-text">UMKM</span>
+          <span id="umkmBadgeCount" class="badge-count">0</span>
+        </button>
         <button id="btnGps" class="icon-btn" title="Lokasi Saya" aria-label="Lokasi Saya">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
@@ -319,11 +324,56 @@
       </div>
     </div>
 
+    <!-- Bottom Sheet / Modal: Detail UMKM & Kuliner Warga -->
+    <div id="umkmModal" class="modal-backdrop hidden">
+      <div class="bottom-sheet umkm-sheet">
+        <div class="sheet-handle"></div>
+
+        <div class="minimal-sheet-header">
+          <div class="alarm-title-group">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+              <span id="umkmCategoryBadge" class="umkm-cat-badge">🍔 Kuliner</span>
+              <span id="umkmStatusBadge" class="status-chip-compact normal">🟢 BUKA</span>
+            </div>
+            <h3 class="target-name" id="umkmModalName">Nama Usaha</h3>
+          </div>
+          <div class="header-actions">
+            <button class="btn-close-modal" id="btnCloseUmkmModal">&times;</button>
+          </div>
+        </div>
+
+        <div class="umkm-modal-body">
+          <div id="umkmPromoBanner" class="umkm-promo-banner hidden">
+            <span class="promo-icon">🏷️</span>
+            <span id="umkmPromoText">Promo Diskon</span>
+          </div>
+
+          <div id="umkmImageWrap" class="umkm-image-wrap hidden">
+            <img id="umkmModalImage" src="" alt="Foto Produk / Usaha" onerror="this.parentElement.classList.add('hidden')">
+          </div>
+
+          <div class="umkm-detail-box">
+            <label class="umkm-section-label">Menu & Layanan:</label>
+            <p id="umkmModalDesc" class="umkm-desc-text">Deskripsi menu atau layanan</p>
+          </div>
+
+          <div class="umkm-action-group">
+            <a id="btnUmkmWhatsapp" href="#" target="_blank" rel="noopener noreferrer" class="btn-wa-order">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.19 8.19 0 0 1-5.82 2.42c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.23-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.07-.1-.23-.17-.48-.29z"/>
+              </svg>
+              <span>Chat & Pesan via WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Main Application Script (v5.1 with Telegram Cloudflare Worker integration) -->
-  <script src="app.js?v=5.1"></script>
+  <!-- Main Application Script (v6.0 with UMKM & Kuliner Integration) -->
+  <script src="app.js?v=6.0"></script>
 </body>
 </html>

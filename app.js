@@ -8,6 +8,7 @@ const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tenga
 const DEFAULT_ZOOM = 17;
 const STORAGE_KEY = 'klipang_green_2_markers_v5';
 const TELEGRAM_WORKER_URL = 'https://summer-rt9.demigod1337.workers.dev';
+const UMKM_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwPvPOxQ_soVSSm5_28XLxcraEI-GEdaz2hnP_1AFuJszeTzbTxBEzYtA4TJwA37EbF/exec';
 
 // Initial Markers
 const INITIAL_DEMO_MARKERS = [
@@ -116,7 +117,10 @@ const state = {
   activeCctvMarkerId: null,
   globalSirenActive: false,
   cctvAnimationId: null,
-  previewCanvasInterval: null
+  previewCanvasInterval: null,
+  umkmList: [],
+  umkmLayerGroup: null,
+  showUmkm: true
 };
 
 // --- Web Audio API Synthesizer (Zero External Audio File Dependency) ---
@@ -386,6 +390,184 @@ function renderAllMarkers() {
   });
 
   updateHeaderStats();
+}
+
+// --- UMKM & Merchant Modules (Google Apps Script API Integration) ---
+function normalizeCoord(val, isLat) {
+  if (val === null || val === undefined) return null;
+  let str = String(val).trim().replace(',', '.');
+  let num = parseFloat(str);
+  if (isNaN(num)) return null;
+
+  if (isLat) {
+    if (num < -90 || num > 90) {
+      const digits = str.replace(/[^0-9]/g, '');
+      const sign = str.startsWith('-') ? -1 : 1;
+      if (digits.length >= 2) {
+        num = sign * parseFloat(digits[0] + '.' + digits.slice(1));
+      }
+    }
+  } else {
+    if (num < -180 || num > 180) {
+      const digits = str.replace(/[^0-9]/g, '');
+      const sign = str.startsWith('-') ? -1 : 1;
+      if (digits.length >= 4) {
+        num = sign * parseFloat(digits.slice(0, 3) + '.' + digits.slice(3));
+      }
+    }
+  }
+  return num;
+}
+
+function createUmkmIcon(item) {
+  const cat = (item.kategori || '').toLowerCase();
+  let emoji = '🛍️';
+  let bgColor = '#6366f1'; // Indigo
+
+  if (cat.includes('kuliner') || cat.includes('makan') || cat.includes('food')) {
+    emoji = '🍔';
+    bgColor = '#f59e0b'; // Amber
+  } else if (cat.includes('laundry') || cat.includes('cuci')) {
+    emoji = '🧺';
+    bgColor = '#06b6d4'; // Cyan
+  } else if (cat.includes('toko') || cat.includes('sembako') || cat.includes('warung')) {
+    emoji = '🏪';
+    bgColor = '#10b981'; // Emerald
+  } else if (cat.includes('kopi') || cat.includes('kafe') || cat.includes('coffee')) {
+    emoji = '☕';
+    bgColor = '#8b5cf6'; // Violet
+  }
+
+  const isClosed = String(item.status || '').toLowerCase().includes('tutup');
+  const statusDotClass = isClosed ? 'umkm-status-dot closed' : 'umkm-status-dot';
+
+  return L.divIcon({
+    className: 'custom-leaflet-marker',
+    html: `
+      <div class="custom-pin">
+        <div class="umkm-pin-bubble" style="background: ${bgColor};">
+          <span>${emoji}</span>
+          <span class="${statusDotClass}"></span>
+        </div>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
+}
+
+function renderUmkmMarkers() {
+  if (!state.map) return;
+  if (!state.umkmLayerGroup) {
+    state.umkmLayerGroup = L.layerGroup().addTo(state.map);
+  }
+
+  state.umkmLayerGroup.clearLayers();
+
+  if (!state.showUmkm) return;
+
+  state.umkmList.forEach(item => {
+    const lat = normalizeCoord(item.lat, true);
+    const lng = normalizeCoord(item.lng, false);
+
+    if (lat === null || lng === null) return;
+
+    const marker = L.marker([lat, lng], { icon: createUmkmIcon(item) });
+    marker.on('click', () => openUmkmModal(item));
+    state.umkmLayerGroup.addLayer(marker);
+  });
+
+  updateHeaderStats();
+}
+
+async function fetchUmkmData() {
+  if (!UMKM_GAS_API_URL) return;
+  try {
+    const res = await fetch(UMKM_GAS_API_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json && json.ok && Array.isArray(json.data)) {
+      state.umkmList = json.data;
+      renderUmkmMarkers();
+      updateHeaderStats();
+    }
+  } catch (err) {
+    console.warn('[UMKM] Gagal memuat data Google Sheet:', err);
+  }
+}
+
+function openUmkmModal(item) {
+  const modal = document.getElementById('umkmModal');
+  if (!modal) return;
+
+  document.getElementById('umkmModalName').textContent = item.nama_usaha || 'Toko Warga';
+
+  const cat = (item.kategori || 'UMKM').toLowerCase();
+  const catBadge = document.getElementById('umkmCategoryBadge');
+  catBadge.textContent = (item.kategori || 'UMKM').toUpperCase();
+  catBadge.className = `umkm-cat-badge ${cat}`;
+
+  const isClosed = String(item.status || '').toLowerCase().includes('tutup');
+  const statusBadge = document.getElementById('umkmStatusBadge');
+  if (isClosed) {
+    statusBadge.className = 'status-chip-compact testing';
+    statusBadge.textContent = '🔴 TUTUP';
+  } else {
+    statusBadge.className = 'status-chip-compact normal';
+    statusBadge.textContent = '🟢 BUKA';
+  }
+
+  const promoWrap = document.getElementById('umkmPromoBanner');
+  const promoText = document.getElementById('umkmPromoText');
+  if (item.promo && String(item.promo).trim() !== '') {
+    promoText.textContent = item.promo;
+    promoWrap.classList.remove('hidden');
+  } else {
+    promoWrap.classList.add('hidden');
+  }
+
+  const imgWrap = document.getElementById('umkmImageWrap');
+  const imgEl = document.getElementById('umkmModalImage');
+  if (item.foto_url && String(item.foto_url).startsWith('http') && !item.foto_url.includes('...')) {
+    imgEl.src = item.foto_url;
+    imgWrap.classList.remove('hidden');
+  } else {
+    imgWrap.classList.add('hidden');
+  }
+
+  document.getElementById('umkmModalDesc').textContent = item.deskripsi_menu || 'Layanan dan produk warga Klipang Green 2';
+
+  const waBtn = document.getElementById('btnUmkmWhatsapp');
+  let waNum = String(item.no_wa || '').replace(/[^0-9]/g, '');
+  if (waNum.startsWith('0')) {
+    waNum = '62' + waNum.slice(1);
+  }
+
+  if (!waNum) {
+    waBtn.style.display = 'none';
+  } else {
+    waBtn.style.display = 'flex';
+    const waMsg = encodeURIComponent(`Halo ${item.nama_usaha}, saya warga Klipang Green 2 lihat dari Peta Perumahan, mau tanya/pesan: ${item.deskripsi_menu || ''}`);
+    waBtn.href = `https://wa.me/${waNum}?text=${waMsg}`;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeUmkmModal() {
+  const modal = document.getElementById('umkmModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function toggleUmkmLayer() {
+  state.showUmkm = !state.showUmkm;
+  const btn = document.getElementById('btnToggleUmkm');
+  if (btn) {
+    btn.classList.toggle('active', state.showUmkm);
+  }
+  renderUmkmMarkers();
+  showToast(state.showUmkm ? 'Menampilkan UMKM & Kuliner' : 'Menyembunyikan UMKM & Kuliner', '🛍️');
 }
 
 function updateMarkerDisplay(markerId) {
@@ -904,7 +1086,15 @@ function updateHeaderStats() {
   if (countEl) {
     const alarmCount = state.markers.filter(m => m.type === 'alarm').length;
     const cctvCount = state.markers.filter(m => m.type === 'cctv').length;
-    countEl.textContent = `${state.markers.length} Marker (${alarmCount} Alarm, ${cctvCount} CCTV)`;
+    countEl.textContent = `${state.markers.length} Keamanan (${alarmCount} Alarm, ${cctvCount} CCTV)`;
+  }
+  const umkmCountEl = document.getElementById('umkmCountText');
+  if (umkmCountEl) {
+    umkmCountEl.textContent = `${state.umkmList.length} UMKM`;
+  }
+  const badgeEl = document.getElementById('umkmBadgeCount');
+  if (badgeEl) {
+    badgeEl.textContent = state.umkmList.length;
   }
 }
 
@@ -943,6 +1133,22 @@ function setupEventListeners() {
   document.getElementById('btnGps').addEventListener('click', locateUserGPS);
   document.getElementById('btnListMarkers').addEventListener('click', openListModal);
   document.getElementById('btnCloseListModal').addEventListener('click', closeListModal);
+
+  // UMKM Toggle & Modal
+  const btnToggleUmkm = document.getElementById('btnToggleUmkm');
+  if (btnToggleUmkm) {
+    btnToggleUmkm.addEventListener('click', toggleUmkmLayer);
+  }
+  const btnCloseUmkm = document.getElementById('btnCloseUmkmModal');
+  if (btnCloseUmkm) {
+    btnCloseUmkm.addEventListener('click', closeUmkmModal);
+  }
+  const umkmModal = document.getElementById('umkmModal');
+  if (umkmModal) {
+    umkmModal.addEventListener('click', (e) => {
+      if (e.target === umkmModal) closeUmkmModal();
+    });
+  }
 
   // FAB Add Marker
   document.getElementById('btnAddMarker').addEventListener('click', startAddMarkerMode);
@@ -1085,4 +1291,5 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMarkers();
   initMap();
   setupEventListeners();
+  fetchUmkmData();
 });

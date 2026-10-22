@@ -39,6 +39,13 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
    - Pilih jenis marker (Alarm atau CCTV).
    - Tersimpan otomatis di `localStorage` peramban (data tidak hilang saat refresh).
 
+5. **Direktori UMKM & Kuliner Warga (Google Sheets API)**:
+   - Terhubung langsung ke Google Sheets via Google Apps Script Web App API.
+   - Menampilkan pin interaktif tematik (🍔 Kuliner, 🧺 Laundry, 🏪 Toko, ☕ Kafe).
+   - Indikator status toko real-time (`🟢 BUKA` / `🔴 TUTUP`) dan banner promo.
+   - Tombol pesan langsung via WhatsApp dengan pesan otomatis.
+   - Tombol switch layer di header untuk menampilkan/menyembunyikan UMKM kapan saja.
+
 ---
 
 ## Cara Upload ke GitHub & Langsung Live Gratis
