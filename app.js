@@ -481,20 +481,45 @@ function renderUmkmMarkers() {
   updateHeaderStats();
 }
 
-async function fetchUmkmData() {
+let umkmLastJsonCache = '';
+const UMKM_SYNC_INTERVAL_MS = 60000; // Auto-polling setiap 60 detik
+let umkmSyncInterval = null;
+
+async function fetchUmkmData(isSilent = false) {
   if (!UMKM_GAS_API_URL) return;
   try {
     const res = await fetch(UMKM_GAS_API_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (json && json.ok && Array.isArray(json.data)) {
-      state.umkmList = json.data;
-      renderUmkmMarkers();
-      updateHeaderStats();
+      const newJsonStr = JSON.stringify(json.data);
+      // Hanya re-render jika data benar-benar berubah/bertambah/berkurang
+      if (newJsonStr !== umkmLastJsonCache) {
+        const prevCount = state.umkmList.length;
+        umkmLastJsonCache = newJsonStr;
+        state.umkmList = json.data;
+        renderUmkmMarkers();
+        updateHeaderStats();
+
+        if (isSilent && prevCount !== state.umkmList.length) {
+          showToast(`Direktori UMKM diperbarui (${state.umkmList.length} usaha)`, '🔄');
+        }
+      }
     }
   } catch (err) {
-    console.warn('[UMKM] Gagal memuat data Google Sheet:', err);
+    if (!isSilent) {
+      console.warn('[UMKM] Gagal memuat data Google Sheet:', err);
+    }
   }
+}
+
+function startUmkmAutoSync() {
+  if (umkmSyncInterval) clearInterval(umkmSyncInterval);
+  umkmSyncInterval = setInterval(() => {
+    if (state.showUmkm && !document.hidden) {
+      fetchUmkmData(true);
+    }
+  }, UMKM_SYNC_INTERVAL_MS);
 }
 
 function openUmkmModal(item) {
@@ -1150,6 +1175,18 @@ function setupEventListeners() {
     });
   }
 
+  // UMKM Auto-Sync saat tab/layar HP kembali aktif
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.showUmkm) {
+      fetchUmkmData(true);
+    }
+  });
+  window.addEventListener('focus', () => {
+    if (state.showUmkm) {
+      fetchUmkmData(true);
+    }
+  });
+
   // FAB Add Marker
   document.getElementById('btnAddMarker').addEventListener('click', startAddMarkerMode);
   document.getElementById('btnCancelAddMode').addEventListener('click', cancelAddMarkerMode);
@@ -1291,5 +1328,5 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMarkers();
   initMap();
   setupEventListeners();
-  fetchUmkmData();
+  fetchUmkmData().then(() => startUmkmAutoSync());
 });
