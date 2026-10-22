@@ -1,0 +1,23 @@
+# Environment & secrets
+.env
+.env.*
+*.local
+
+# Cloudflare Worker scratch & local notes
+cf-work-bot.txt
+*.tmp
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node / Logs
+node_modules/
+*.log

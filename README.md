@@ -20,6 +20,15 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
      - ⚠️ Bahaya Lain
    - Sirine darurat sintetis kontinu berbunyi otomatis di perangkat tanpa perlu file MP3 eksternal, lengkap dengan radar pulsing merah di peta dan banner darurat global.
    - Tombol Hentikan Sirine.
+   - **Integrasi Webhook Telegram (Cloudflare Worker)**:
+     - Menghubungkan alarm langsung ke Telegram Bot via Cloudflare Worker (`https://summer-rt9.demigod1337.workers.dev/`).
+     - Tombol **Ping / Test**: Mengirim sinyal `action=ping` (mengubah title grup ke `20` untuk trigger bunyi beep 3 detik).
+     - Tombol **Matikan Sirine / Mute Global**: Mengirim sinyal `action=stop` (mengubah title grup ke `101` untuk mematikan sirine).
+     - Mendukung routing multi-bot (Bot 1 s.d. Bot 4) sesuai titik alarm masing-masing dengan aman tanpa mengekspos token bot ke klien:
+       - **Bot 1**: Alarm Safir 3
+       - **Bot 2**: Alarm Safir 2
+       - **Bot 3**: Alarm Kalimaya Timur
+       - **Bot 4**: Alarm Kalimaya Barat
 
 3. **Marker CCTV**:
    - Klik marker CCTV menampilkan preview thumbnail mini live camera.

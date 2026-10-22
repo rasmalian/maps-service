@@ -6,26 +6,31 @@
 // --- Default Configuration & State ---
 const DEFAULT_COORDS = [-7.0503327574839405, 110.48405875119505]; // Titik Tengah Peta Baru
 const DEFAULT_ZOOM = 17;
-const STORAGE_KEY = 'klipang_green_2_markers_v3';
+const STORAGE_KEY = 'klipang_green_2_markers_v5';
+const TELEGRAM_WORKER_URL = 'https://summer-rt9.demigod1337.workers.dev';
 
 // Initial Markers
 const INITIAL_DEMO_MARKERS = [
   {
     id: 'm_alarm_1',
     type: 'alarm',
-    name: 'Alarm Titik 1',
+    name: 'Alarm Safir 2',
     lat: -7.050423194247873,
     lng: 110.48430984799066,
     status: 'idle',
     activeHazard: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    webhooks: {
+      ping: `${TELEGRAM_WORKER_URL}/?bot=2&action=ping`,
+      stop: `${TELEGRAM_WORKER_URL}/?bot=2&action=stop`
+    }
   },
   {
     id: 'm_cctv_1',
     type: 'cctv',
     name: 'CCTV Titik 1',
     lat: -7.050423194247873,
-    lng: 110.48433984799066, // Diberi offset ~3m agar tidak bertumpuk persis dengan Alarm Titik 1 sehingga dua-duanya mudah diklik
+    lng: 110.48433984799066, // Diberi offset ~3m agar tidak bertumpuk persis dengan Alarm Safir 2 sehingga dua-duanya mudah diklik
     preset: 'gate',
     createdAt: Date.now()
   },
@@ -39,29 +44,37 @@ const INITIAL_DEMO_MARKERS = [
     activeHazard: null,
     createdAt: Date.now(),
     webhooks: {
-      ping: 'https://api.telegram.org/bot72912b_Yo6s/setChatTitle?chat_id=-4879338&title=20',
-      stop: 'https://api.telegram.org/bot7291/setChatTitle?chat_id=-48738&title=101'
+      ping: `${TELEGRAM_WORKER_URL}/?bot=1&action=ping`,
+      stop: `${TELEGRAM_WORKER_URL}/?bot=1&action=stop`
     }
   },
   {
     id: 'm_alarm_3',
     type: 'alarm',
-    name: 'Alarm Titik 3',
+    name: 'Alarm Kalimaya Timur',
     lat: -7.051005204245323,
     lng: 110.48481366638987,
     status: 'idle',
     activeHazard: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    webhooks: {
+      ping: `${TELEGRAM_WORKER_URL}/?bot=3&action=ping`,
+      stop: `${TELEGRAM_WORKER_URL}/?bot=3&action=stop`
+    }
   },
   {
     id: 'm_alarm_4',
     type: 'alarm',
-    name: 'Alarm Titik 4',
+    name: 'Alarm Kalimaya Barat',
     lat: -7.051349569340888,
     lng: 110.48230923057393,
     status: 'idle',
     activeHazard: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    webhooks: {
+      ping: `${TELEGRAM_WORKER_URL}/?bot=4&action=ping`,
+      stop: `${TELEGRAM_WORKER_URL}/?bot=4&action=stop`
+    }
   },
   {
     id: 'm_cctv_2',
@@ -229,15 +242,46 @@ const audioFX = new SoundSynthesizer();
 // --- Storage Management ---
 function loadMarkers() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      // Migrasi data dari versi sebelumnya jika ada
+      raw = localStorage.getItem('klipang_green_2_markers_v4') ||
+            localStorage.getItem('klipang_green_2_markers_v3') ||
+            localStorage.getItem('klipang_green_2_markers_v2');
+    }
+
     if (raw) {
       state.markers = JSON.parse(raw);
+      // Sinkronkan nama dan webhook untuk marker alarm standar
+      state.markers.forEach(m => {
+        if (m.type === 'alarm') {
+          if (m.id === 'm_alarm_1' && (m.name === 'Alarm Titik 1' || !m.name)) {
+            m.name = 'Alarm Safir 2';
+          }
+          if (m.id === 'm_alarm_2' && (m.name === 'Alarm Titik 2' || !m.name)) {
+            m.name = 'Alarm Safir 3';
+          }
+          if (m.id === 'm_alarm_3' && (m.name === 'Alarm Titik 3' || !m.name)) {
+            m.name = 'Alarm Kalimaya Timur';
+          }
+          if (m.id === 'm_alarm_4' && (m.name === 'Alarm Titik 4' || !m.name)) {
+            m.name = 'Alarm Kalimaya Barat';
+          }
+
+          const botId = getBotIdForMarker(m);
+          m.webhooks = {
+            ping: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=ping`,
+            stop: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=stop`
+          };
+        }
+      });
+      saveMarkers();
     } else {
-      state.markers = [...INITIAL_DEMO_MARKERS];
+      state.markers = JSON.parse(JSON.stringify(INITIAL_DEMO_MARKERS));
       saveMarkers();
     }
   } catch (e) {
-    state.markers = [...INITIAL_DEMO_MARKERS];
+    state.markers = JSON.parse(JSON.stringify(INITIAL_DEMO_MARKERS));
   }
 }
 
@@ -565,21 +609,45 @@ function showToast(message, icon = '📡') {
   }, 2800);
 }
 
+function getBotIdForMarker(marker) {
+  if (!marker) return '1';
+  if (marker.botId) return String(marker.botId);
+  if (marker.id === 'm_alarm_2') return '1'; // Alarm Safir 3 -> Bot 1
+  if (marker.id === 'm_alarm_1') return '2'; // Alarm Safir 2 -> Bot 2
+  if (marker.id === 'm_alarm_3') return '3'; // Alarm Kalimaya Timur -> Bot 3
+  if (marker.id === 'm_alarm_4') return '4'; // Alarm Kalimaya Barat -> Bot 4
+
+  const name = (marker.name || '').toLowerCase();
+  if (name.includes('safir 3')) return '1';
+  if (name.includes('safir 2') || name.includes('titik 1') || name.includes('titik 2')) return '2';
+  if (name.includes('kalimaya timur') || name.includes('titik 3')) return '3';
+  if (name.includes('kalimaya barat') || name.includes('titik 4')) return '4';
+
+  const numMatch = name.match(/\b([1-4])\b/);
+  if (numMatch) return numMatch[1];
+
+  return '1';
+}
+
 function getMarkerWebhook(marker, action) {
   if (!marker) return null;
+
   if (marker.webhooks && marker.webhooks[action]) {
-    return marker.webhooks[action];
-  }
-  // Fallback match khusus Alarm Safir 3 / Titik 2
-  const isSafir3 = marker.id === 'm_alarm_2' || (marker.name && (marker.name.toLowerCase().includes('safir 3') || marker.name.toLowerCase().includes('titik 2')));
-  if (isSafir3) {
-    if (action === 'ping') {
-      return 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=20';
+    const rawUrl = marker.webhooks[action];
+    // Jika masih ada sisa URL direct api.telegram.org lama, alihkan ke worker
+    if (rawUrl.includes('api.telegram.org')) {
+      const botId = getBotIdForMarker(marker);
+      return `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=${action}`;
     }
-    if (action === 'stop') {
-      return 'https://api.telegram.org/bot7291278930:AAFxJf-I6DUlNtRohK7NJAVhixrPCb_Yo6s/setChatTitle?chat_id=-4879699338&title=101';
-    }
+    return rawUrl;
   }
+
+  // Fallback otomatis berdasarkan bot ID marker
+  const botId = getBotIdForMarker(marker);
+  if (botId) {
+    return `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=${action}`;
+  }
+
   return null;
 }
 
@@ -590,13 +658,41 @@ async function sendWebhookRequest(url, actionDesc) {
 
   try {
     const res = await fetch(url, { method: 'GET', mode: 'cors' });
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (_) {}
+
     if (res.ok) {
-      console.log(`[Webhook] Berhasil: ${actionDesc}`);
+      if (Array.isArray(data)) {
+        const rejected = data.find(item => item.status === 'rejected');
+        if (rejected) {
+          const reason = rejected.reason || 'Environment variables bot belum lengkap';
+          console.warn(`[Webhook] Bot rejected:`, rejected);
+          showToast(`Gagal: ${reason}`, '⚠️');
+          return false;
+        }
+
+        const tgError = data.find(item => item.value && item.value.response && item.value.response.ok === false);
+        if (tgError) {
+          const desc = (tgError.value && tgError.value.response && tgError.value.response.description) || 'Gagal mengubah title Telegram';
+          console.warn(`[Webhook] Telegram error:`, tgError);
+          showToast(`Telegram: ${desc}`, '⚠️');
+          return false;
+        }
+      } else if (data && data.ok === false) {
+        console.warn(`[Webhook] Worker error:`, data.error);
+        showToast(`Gagal: ${data.error}`, '⚠️');
+        return false;
+      }
+
+      console.log(`[Webhook] Berhasil: ${actionDesc}`, data);
       showToast(`Sinyal ${actionDesc} terkirim ke Telegram`, '✅');
       return true;
     } else {
-      console.warn(`[Webhook] Respon Telegram: ${res.status}`);
-      showToast(`Sinyal ${actionDesc} terkirim (Status: ${res.status})`, '⚠️');
+      const errDetail = (data && data.error) ? data.error : `Status HTTP ${res.status}`;
+      console.warn(`[Webhook] Respon server: ${res.status}`, data);
+      showToast(`Gagal: ${errDetail}`, '⚠️');
       return false;
     }
   } catch (err) {
@@ -976,7 +1072,7 @@ function setupEventListeners() {
   // Reset to Defaults
   document.getElementById('btnResetDefaultMarkers').addEventListener('click', () => {
     if (confirm('Kembalikan marker ke contoh bawaan awal? Marker kustommu akan direset.')) {
-      state.markers = [...INITIAL_DEMO_MARKERS];
+      state.markers = JSON.parse(JSON.stringify(INITIAL_DEMO_MARKERS));
       saveMarkers();
       renderAllMarkers();
       closeListModal();
