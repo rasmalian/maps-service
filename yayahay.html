@@ -27,7 +27,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=6.6">
+  <!-- HLS.js for Live M3U8 Video Stream -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <link rel="stylesheet" href="style.css?v=6.8">
 </head>
 <body>
 
@@ -214,6 +217,7 @@
 
         <!-- Video Player / Simulated Stream Feed -->
         <div class="cctv-video-wrap">
+          <video id="cctvVideoPlayer" class="cctv-live-video hidden" playsinline autoplay muted loop></video>
           <canvas id="cctvLiveCanvas" width="854" height="480"></canvas>
           <div class="cctv-osd-overlay">
             <div class="osd-top">
@@ -231,8 +235,8 @@
         <!-- CCTV Controls Bar -->
         <div class="cctv-controls">
           <div class="cctv-mode-tags">
-            <span class="pill-tag active">Kamera Aktif</span>
-            <span class="pill-tag">Inframerah / Auto</span>
+            <span class="pill-tag active" id="cctvModeSource">Kamera Aktif</span>
+            <span class="pill-tag" id="cctvStatusTag">Inframerah / Auto</span>
           </div>
           <div class="cctv-action-btns">
             <button id="btnSnapshotCctv" class="btn-cctv-pill">
@@ -395,7 +399,7 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Main Application Script (v6.7 with Strict Bot Isolation & Fix Overlapping Alarm Trigger) -->
-  <script src="app.js?v=6.7"></script>
+  <!-- Main Application Script (v6.8 with CCTV Safir 2 Live M3U8 Stream & Offset Position) -->
+  <script src="app.js?v=6.8"></script>
 </body>
 </html>

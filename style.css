@@ -854,12 +854,26 @@ html, body {
   overflow: hidden;
 }
 
-#cctvLiveCanvas {
+#cctvLiveCanvas, #cctvVideoPlayer {
   width: 100%;
   height: auto;
   max-height: 80vh;
   object-fit: contain;
   display: block;
+}
+
+.cctv-live-video {
+  background: #000;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.cctv-live-video.hidden {
+  display: none !important;
 }
 
 .cctv-osd-overlay {

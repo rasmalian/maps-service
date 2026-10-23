@@ -30,10 +30,11 @@ const INITIAL_DEMO_MARKERS = [
   {
     id: 'm_cctv_1',
     type: 'cctv',
-    name: 'CCTV Titik 1',
-    lat: -7.050423194247873,
-    lng: 110.48433984799066, // Diberi offset ~3m agar tidak bertumpuk persis dengan Alarm Safir 2 sehingga dua-duanya mudah diklik
+    name: 'CCTV Safir 2',
+    lat: -7.050360,
+    lng: 110.484230, // Digeser ~11m ke sudut barat laut agar tidak bertumpuk dengan Alarm Safir 2
     preset: 'gate',
+    streamUrl: 'https://livepantau.semarangkota.go.id/7f4d1bec-25f2-4ffe-9673-0d4e3c3111c2/index.m3u8',
     createdAt: Date.now()
   },
   {
@@ -171,6 +172,7 @@ const state = {
   globalSirenActive: false,
   cctvAnimationId: null,
   previewCanvasInterval: null,
+  hlsInstance: null,
   umkmList: [],
   umkmLayerGroup: null,
   showUmkm: true
@@ -332,6 +334,14 @@ function loadMarkers() {
             ping: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=ping`,
             stop: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=stop`
           };
+        } else if (m.type === 'cctv') {
+          // Sinkronkan CCTV Titik 1 -> CCTV Safir 2 dan update posisi agar tidak bertumpuk
+          if (m.id === 'm_cctv_1' || (m.name && (m.name.includes('Titik 1') || m.name.includes('Safir 2')))) {
+            m.name = 'CCTV Safir 2';
+            m.streamUrl = 'https://livepantau.semarangkota.go.id/7f4d1bec-25f2-4ffe-9673-0d4e3c3111c2/index.m3u8';
+            m.lat = -7.050360;
+            m.lng = 110.484230;
+          }
         }
       });
       saveMarkers();
@@ -832,11 +842,13 @@ function drawSimulatedCameraFrame(canvas, marker, isHighRes = false) {
 }
 
 function createCctvPopupHtml(marker) {
+  const isRealStream = !!marker.streamUrl;
+  const badgeText = isRealStream ? '🔴 LIVE STREAM' : '● LIVE';
   return `
     <div class="cctv-preview-card" onclick="openCctvFullscreen('${marker.id}')">
       <div class="cctv-preview-thumb-wrap">
         <canvas class="cctv-preview-canvas" id="popup_canvas_${marker.id}" width="200" height="105"></canvas>
-        <span class="cctv-badge-live">● LIVE</span>
+        <span class="cctv-badge-live">${badgeText}</span>
       </div>
       <div class="cctv-preview-title">${marker.name}</div>
       <div class="cctv-preview-hint">
@@ -878,6 +890,9 @@ window.openCctvFullscreen = function(markerId) {
   const osdCamId = document.getElementById('osdCamId');
   const osdLocation = document.getElementById('osdLocation');
   const canvas = document.getElementById('cctvLiveCanvas');
+  const video = document.getElementById('cctvVideoPlayer');
+  const modeSource = document.getElementById('cctvModeSource');
+  const statusTag = document.getElementById('cctvStatusTag');
 
   title.textContent = marker.name;
   osdCamId.textContent = `CAM-${marker.id.slice(-4).toUpperCase()}`;
@@ -885,10 +900,74 @@ window.openCctvFullscreen = function(markerId) {
 
   modal.classList.remove('hidden');
 
-  // Start smooth 30fps animation loop on the canvas
+  // Bersihkan HLS player sebelumnya jika ada
+  if (state.hlsInstance) {
+    state.hlsInstance.destroy();
+    state.hlsInstance = null;
+  }
+  if (video) {
+    video.pause();
+    video.src = '';
+    video.classList.add('hidden');
+  }
+
+  // Jika marker memiliki stream live URL (contoh: m3u8 dari Pemkot Semarang)
+  if (marker.streamUrl && video) {
+    if (modeSource) modeSource.textContent = 'Live HLS Stream';
+    if (statusTag) statusTag.textContent = 'Menghubungkan Stream...';
+
+    const streamUrl = marker.streamUrl;
+
+    // 1. Coba Hls.js jika didukung browser
+    if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        manifestLoadingTimeOut: 10000,
+        levelLoadingTimeOut: 10000
+      });
+      state.hlsInstance = hls;
+
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.classList.remove('hidden');
+        video.play().catch(e => console.warn('Autoplay video dicegah browser:', e));
+        if (statusTag) statusTag.textContent = '🟢 Online Live (Semarang)';
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.warn('[CCTV HLS Error]', data);
+        if (data.fatal) {
+          if (statusTag) statusTag.textContent = '⚠️ Stream Offline (Beralih ke Simulasi)';
+          video.classList.add('hidden');
+          hls.destroy();
+          state.hlsInstance = null;
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // 2. Dukungan native HLS (Safari iOS / macOS)
+      video.src = streamUrl;
+      video.addEventListener('loadedmetadata', () => {
+        video.classList.remove('hidden');
+        video.play().catch(e => console.warn('Autoplay error:', e));
+        if (statusTag) statusTag.textContent = '🟢 Online Live (Safari)';
+      });
+      video.addEventListener('error', () => {
+        if (statusTag) statusTag.textContent = '⚠️ Stream Offline (Beralih ke Simulasi)';
+        video.classList.add('hidden');
+      });
+    }
+  } else {
+    if (modeSource) modeSource.textContent = 'Kamera Simulasi';
+    if (statusTag) statusTag.textContent = 'Inframerah / Auto';
+  }
+
+  // Jalankan smooth animation loop pada canvas (sebagai fallback/background/clock OSD)
   function renderLoop() {
     drawSimulatedCameraFrame(canvas, marker, true);
-    // Update live clock
+    // Update live digital clock
     const clock = document.getElementById('cctvClock');
     if (clock) {
       const now = new Date();
@@ -906,6 +985,17 @@ function closeCctvFullscreen() {
   modal.classList.add('hidden');
   cancelAnimationFrame(state.cctvAnimationId);
   state.activeCctvMarkerId = null;
+
+  if (state.hlsInstance) {
+    state.hlsInstance.destroy();
+    state.hlsInstance = null;
+  }
+  const video = document.getElementById('cctvVideoPlayer');
+  if (video) {
+    video.pause();
+    video.src = '';
+    video.classList.add('hidden');
+  }
 }
 
 // --- Alarm Modal & Hazard Trigger Controls ---
@@ -1596,11 +1686,31 @@ function setupEventListeners() {
     }
   });
   document.getElementById('btnSnapshotCctv').addEventListener('click', () => {
+    const video = document.getElementById('cctvVideoPlayer');
     const canvas = document.getElementById('cctvLiveCanvas');
-    if (!canvas) return;
     const link = document.createElement('a');
     link.download = `CCTV_SNAPSHOT_${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
+
+    if (video && !video.classList.contains('hidden') && video.readyState >= 2) {
+      const snapCanvas = document.createElement('canvas');
+      snapCanvas.width = video.videoWidth || 854;
+      snapCanvas.height = video.videoHeight || 480;
+      const ctx = snapCanvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+
+      // OSD Watermark
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(`CCTV SAFIR 2 - ${new Date().toLocaleString('id-ID')}`, 20, snapCanvas.height - 20);
+
+      link.href = snapCanvas.toDataURL('image/png');
+    } else if (canvas) {
+      link.href = canvas.toDataURL('image/png');
+    } else {
+      return;
+    }
     link.click();
   });
 

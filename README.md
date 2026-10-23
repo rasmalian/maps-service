@@ -30,9 +30,11 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
        - **Bot 3**: Alarm Kalimaya Timur
        - **Bot 4**: Alarm Kalimaya Barat
 
-3. **Marker CCTV**:
-   - Klik marker CCTV menampilkan preview thumbnail mini live camera.
-   - Klik thumbnail untuk memperbesar ke mode Fullscreen CCTV viewer lengkap dengan live digital clock, scanline security OSD, dan tombol capture snapshot foto.
+3. **Marker CCTV & Live Stream HLS**:
+   - **CCTV Safir 2**: Terintegrasi langsung dengan video feed live streaming HLS (`.m3u8`) resmi Pemerintah Kota Semarang (`livepantau.semarangkota.go.id`). Posisi marker dioptimalkan agar tidak saling bertumpuk dengan marker alarm sekitar.
+   - Klik marker CCTV menampilkan preview thumbnail mini live camera dengan badge `🔴 LIVE STREAM`.
+   - Mode Fullscreen CCTV viewer interaktif didukung Hls.js dengan fallback otomatis ke simulasi kanvas jika kamera kota sedang maintenance/offline.
+   - Dilengkapi live digital clock OSD, scanline visual effect, dan tombol capture snapshot foto langsung dari frame video real-time.
 
 4. **Tambah & Kelola Marker**:
    - Tombol **+ Tambah**: Sentuh titik mana saja di peta perumahan untuk menaruh marker baru.
