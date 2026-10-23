@@ -32,9 +32,10 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
 
 3. **Marker CCTV & Live Stream HLS**:
    - **CCTV Safir 2**: Terintegrasi langsung dengan video feed live streaming HLS (`.m3u8`) resmi Pemerintah Kota Semarang (`livepantau.semarangkota.go.id`). Posisi marker dioptimalkan agar tidak saling bertumpuk dengan marker alarm sekitar.
-   - Klik marker CCTV menampilkan preview thumbnail mini live camera dengan badge `🔴 LIVE STREAM`.
+   - **CCTV Safir 3**: Terintegrasi langsung dengan video feed live streaming HLS (`.m3u8`) resmi Pemerintah Kota Semarang (`livepantau.semarangkota.go.id/190e60ca-44df-4bb1-840b-7a0ccf35f169/index.m3u8`).
+   - Klik marker CCTV menampilkan preview thumbnail mini live camera dengan pemutaran live video langsung di popup + badge `🔴 LIVE STREAM`.
    - Mode Fullscreen CCTV viewer interaktif didukung Hls.js dengan fallback otomatis ke simulasi kanvas jika kamera kota sedang maintenance/offline.
-   - Dilengkapi live digital clock OSD, scanline visual effect, dan tombol capture snapshot foto langsung dari frame video real-time.
+   - Dilengkapi live digital clock OSD, scanline visual effect, dan tombol capture snapshot foto langsung dari frame video real-time beserta nama kamera dinamis.
 
 4. **Tambah & Kelola Marker**:
    - Tombol **+ Tambah**: Sentuh titik mana saja di peta perumahan untuk menaruh marker baru.

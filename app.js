@@ -100,10 +100,11 @@ const INITIAL_DEMO_MARKERS = [
   {
     id: 'm_cctv_4',
     type: 'cctv',
-    name: 'CCTV Titik 4',
+    name: 'CCTV Safir 3',
     lat: -7.050418393665095,
     lng: 110.48485564474373,
     preset: 'gate',
+    streamUrl: 'https://livepantau.semarangkota.go.id/190e60ca-44df-4bb1-840b-7a0ccf35f169/index.m3u8',
     createdAt: Date.now()
   }
 ];
@@ -342,6 +343,11 @@ function loadMarkers() {
             m.streamUrl = 'https://livepantau.semarangkota.go.id/7f4d1bec-25f2-4ffe-9673-0d4e3c3111c2/index.m3u8';
             m.lat = -7.050360;
             m.lng = 110.484230;
+          }
+          // Sinkronkan CCTV Titik 4 -> CCTV Safir 3
+          if (m.id === 'm_cctv_4' || (m.name && (m.name.includes('Titik 4') || m.name.includes('Safir 3')))) {
+            m.name = 'CCTV Safir 3';
+            m.streamUrl = 'https://livepantau.semarangkota.go.id/190e60ca-44df-4bb1-840b-7a0ccf35f169/index.m3u8';
           }
         }
       });
@@ -1780,11 +1786,13 @@ function setupEventListeners() {
       ctx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
 
       // OSD Watermark
+      const activeCam = state.markers.find(m => m.id === state.activeCctvMarkerId);
+      const camLabel = activeCam ? activeCam.name.toUpperCase() : 'CCTV MONITOR';
       ctx.font = 'bold 16px monospace';
       ctx.fillStyle = '#38bdf8';
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 4;
-      ctx.fillText(`CCTV SAFIR 2 - ${new Date().toLocaleString('id-ID')}`, 20, snapCanvas.height - 20);
+      ctx.fillText(`${camLabel} - ${new Date().toLocaleString('id-ID')}`, 20, snapCanvas.height - 20);
 
       link.href = snapCanvas.toDataURL('image/png');
     } else if (canvas) {
