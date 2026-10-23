@@ -312,20 +312,22 @@ function loadMarkers() {
       // Sinkronkan nama dan webhook untuk marker alarm standar
       state.markers.forEach(m => {
         if (m.type === 'alarm') {
-          if (m.id === 'm_alarm_1' && (m.name === 'Alarm Titik 1' || !m.name)) {
+          if (m.id === 'm_alarm_1' || (m.name && m.name.toLowerCase().includes('safir 2'))) {
             m.name = 'Alarm Safir 2';
-          }
-          if (m.id === 'm_alarm_2' && (m.name === 'Alarm Titik 2' || !m.name)) {
+            m.botId = '2';
+          } else if (m.id === 'm_alarm_2' || (m.name && m.name.toLowerCase().includes('safir 3'))) {
             m.name = 'Alarm Safir 3';
-          }
-          if (m.id === 'm_alarm_3' && (m.name === 'Alarm Titik 3' || !m.name)) {
+            m.botId = '1';
+          } else if (m.id === 'm_alarm_3' || (m.name && m.name.toLowerCase().includes('kalimaya timur'))) {
             m.name = 'Alarm Kalimaya Timur';
-          }
-          if (m.id === 'm_alarm_4' && (m.name === 'Alarm Titik 4' || !m.name)) {
+            m.botId = '3';
+          } else if (m.id === 'm_alarm_4' || (m.name && m.name.toLowerCase().includes('kalimaya barat'))) {
             m.name = 'Alarm Kalimaya Barat';
+            m.botId = '4';
           }
 
           const botId = getBotIdForMarker(m);
+          m.botId = botId;
           m.webhooks = {
             ping: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=ping`,
             stop: `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=stop`
@@ -1059,17 +1061,24 @@ function showRandomUmkmSpotlight() {
 
 function getBotIdForMarker(marker) {
   if (!marker) return '1';
-  if (marker.botId) return String(marker.botId);
+
+  // 1. Prioritaskan ID marker default yang sudah pasti
   if (marker.id === 'm_alarm_2') return '1'; // Alarm Safir 3 -> Bot 1
   if (marker.id === 'm_alarm_1') return '2'; // Alarm Safir 2 -> Bot 2
   if (marker.id === 'm_alarm_3') return '3'; // Alarm Kalimaya Timur -> Bot 3
   if (marker.id === 'm_alarm_4') return '4'; // Alarm Kalimaya Barat -> Bot 4
 
+  // 2. Prioritaskan pencocokan nama spesifik (Cegah Safir 3 disalahartikan sebagai Bot 3!)
   const name = (marker.name || '').toLowerCase();
   if (name.includes('safir 3')) return '1';
   if (name.includes('safir 2') || name.includes('titik 1') || name.includes('titik 2')) return '2';
   if (name.includes('kalimaya timur') || name.includes('titik 3')) return '3';
   if (name.includes('kalimaya barat') || name.includes('titik 4')) return '4';
+
+  // 3. Jika marker memiliki botId kustom yang valid (1-4)
+  if (marker.botId && /^[1-4]$/.test(String(marker.botId))) {
+    return String(marker.botId);
+  }
 
   const numMatch = name.match(/\b([1-4])\b/);
   if (numMatch) return numMatch[1];
@@ -1080,17 +1089,7 @@ function getBotIdForMarker(marker) {
 function getMarkerWebhook(marker, action) {
   if (!marker) return null;
 
-  if (marker.webhooks && marker.webhooks[action]) {
-    const rawUrl = marker.webhooks[action];
-    // Jika masih ada sisa URL direct api.telegram.org lama, alihkan ke worker
-    if (rawUrl.includes('api.telegram.org')) {
-      const botId = getBotIdForMarker(marker);
-      return `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=${action}`;
-    }
-    return rawUrl;
-  }
-
-  // Fallback otomatis berdasarkan bot ID marker
+  // Selalu hitung botId secara dinamis & konsisten agar webhook tidak tertukar dengan data lama
   const botId = getBotIdForMarker(marker);
   if (botId) {
     return `${TELEGRAM_WORKER_URL}/?bot=${botId}&action=${action}`;
