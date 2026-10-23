@@ -637,13 +637,23 @@ function openUmkmModal(item) {
   const rawStatus = item.status || item['stat…'] || item['stat?'] || '';
   const isClosed = String(rawStatus).toLowerCase().includes('tutup');
   const statusBadge = document.getElementById('umkmStatusBadge');
+  const deliveryBadge = document.getElementById('umkmDeliveryBadge');
   if (isClosed) {
     statusBadge.className = 'status-chip-compact testing';
     statusBadge.textContent = '🔴 TUTUP';
+    if (deliveryBadge) deliveryBadge.style.display = 'none';
   } else {
     statusBadge.className = 'status-chip-compact normal';
     statusBadge.textContent = '🟢 BUKA';
+    if (deliveryBadge) {
+      deliveryBadge.style.display = 'inline-flex';
+      deliveryBadge.className = 'status-chip-compact delivery';
+      deliveryBadge.textContent = '🏷️ Siap Kirim';
+    }
   }
+
+  // Tampilkan toast notifikasi status 10 detik sesuai status masing-masing UMKM
+  triggerUmkmStatusToast(item);
 
   const promoWrap = document.getElementById('umkmPromoBanner');
   const promoText = document.getElementById('umkmPromoText');
@@ -685,6 +695,40 @@ function openUmkmModal(item) {
 function closeUmkmModal() {
   const modal = document.getElementById('umkmModal');
   if (modal) modal.classList.add('hidden');
+}
+
+// Tampilkan status toast dinamis selama 10 detik sesuai status masing-masing UMKM
+function triggerUmkmStatusToast(item) {
+  if (!item) return;
+
+  const rawStatus = item.status || item['stat…'] || item['stat?'] || '';
+  const isClosed = String(rawStatus).toLowerCase().includes('tutup');
+  const nama = item.nama_usaha || 'UMKM Warga';
+  const promo = (item.promo || '').trim();
+  const desc = (item.deskripsi_menu || '').trim();
+
+  let toastMsg = '';
+  let toastIcon = '🏷️';
+  let toastType = 'ready';
+
+  if (isClosed) {
+    toastIcon = '🔴';
+    toastMsg = `🔴 Sedang Tutup • ${nama} (Buka kembali nanti)`;
+    toastType = 'closed';
+  } else {
+    toastIcon = '🏷️';
+    if (promo) {
+      toastMsg = `🏷️ Siap Kirim • ${nama}: "${promo}"`;
+    } else if (desc) {
+      toastMsg = `🏷️ Siap Kirim • ${nama} (${desc})`;
+    } else {
+      toastMsg = `🏷️ Siap Kirim • ${nama} (Buka & Ready Order)`;
+    }
+    toastType = 'ready';
+  }
+
+  // Muncul tepat 10 detik (10.000 ms) sesuai status masing-masing UMKM
+  showToast(toastMsg, toastIcon, 10000, toastType);
 }
 
 function focusUmkmOnMap() {
@@ -915,7 +959,7 @@ function getHazardLabel(type) {
 
 // --- Webhook & Notification System ---
 let toastTimeout = null;
-function showToast(message, icon = '📡') {
+function showToast(message, icon = '📡', duration = 2800, type = 'default', onClick = null) {
   const toast = document.getElementById('toastNotification');
   const msgEl = document.getElementById('toastMessage');
   const iconEl = document.getElementById('toastIcon');
@@ -923,14 +967,94 @@ function showToast(message, icon = '📡') {
 
   if (msgEl) msgEl.textContent = message;
   if (iconEl) iconEl.textContent = icon;
+
+  // Hapus class tipe lama & pasang yang baru
+  toast.classList.remove('toast-umkm-ready', 'toast-umkm-closed');
+  if (type === 'ready') toast.classList.add('toast-umkm-ready');
+  if (type === 'closed') toast.classList.add('toast-umkm-closed');
+
+  // Callback interaktif (misal diklik untuk fokus ke toko)
+  if (typeof onClick === 'function') {
+    toast.style.cursor = 'pointer';
+    toast.onclick = (e) => {
+      e.stopPropagation();
+      onClick(e);
+      hideToast();
+    };
+  } else {
+    toast.style.cursor = 'default';
+    toast.onclick = null;
+  }
+
   toast.classList.remove('hidden');
   toast.style.opacity = '1';
 
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.classList.add('hidden'), 300);
-  }, 2800);
+    hideToast();
+  }, duration);
+}
+
+function hideToast() {
+  const toast = document.getElementById('toastNotification');
+  if (!toast) return;
+  toast.style.opacity = '0';
+  setTimeout(() => {
+    toast.classList.add('hidden');
+    toast.classList.remove('toast-umkm-ready', 'toast-umkm-closed');
+  }, 300);
+}
+
+// --- Live UMKM Spotlight Ticker (Auto Rotasi Highlight Toko Warga) ---
+let umkmSpotlightInterval = null;
+function startUmkmLiveSpotlight() {
+  if (umkmSpotlightInterval) clearInterval(umkmSpotlightInterval);
+
+  // Tunggu 5 detik setelah peta dibuka untuk memunculkan highlight pertama
+  setTimeout(() => {
+    showRandomUmkmSpotlight();
+  }, 5000);
+
+  // Tampilkan spotlight toko berikutnya secara otomatis setiap 40 detik
+  umkmSpotlightInterval = setInterval(() => {
+    if (state.showUmkm && !state.globalSirenActive && !document.hidden) {
+      showRandomUmkmSpotlight();
+    }
+  }, 40000);
+}
+
+function showRandomUmkmSpotlight() {
+  if (!state.umkmList || state.umkmList.length === 0) return;
+
+  // Prioritaskan UMKM yang statusnya buka
+  const openUmkm = state.umkmList.filter(item => {
+    const rawStatus = item.status || item['stat…'] || item['stat?'] || '';
+    return !String(rawStatus).toLowerCase().includes('tutup');
+  });
+
+  const pool = openUmkm.length > 0 ? openUmkm : state.umkmList;
+  if (pool.length === 0) return;
+
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  const item = pool[randomIndex];
+  if (!item) return;
+
+  const nama = item.nama_usaha || 'UMKM Warga';
+  const promo = (item.promo || '').trim();
+  const desc = (item.deskripsi_menu || '').trim();
+  const textInfo = promo ? `"${promo}"` : (desc || 'Siap melayani warga');
+
+  const message = `🏷️ Siap Kirim: ${nama} • ${textInfo} (Ketuk untuk lihat)`;
+
+  showToast(message, '🏷️', 10000, 'ready', () => {
+    // Saat diklik, arahkan kamera ke pin toko & buka modalnya
+    const lat = normalizeCoord(item.lat, true);
+    const lng = normalizeCoord(item.lng, false);
+    if (lat !== null && lng !== null && state.map) {
+      state.map.flyTo([lat, lng], 18, { duration: 1 });
+    }
+    openUmkmModal(item);
+  });
 }
 
 function getBotIdForMarker(marker) {
@@ -1497,5 +1621,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMarkers();
   initMap();
   setupEventListeners();
-  fetchUmkmData().then(() => startUmkmAutoSync());
+  fetchUmkmData().then(() => {
+    startUmkmAutoSync();
+    startUmkmLiveSpotlight();
+  });
 });

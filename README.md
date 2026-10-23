@@ -45,6 +45,9 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
    - Indikator status toko real-time (`🟢 BUKA` / `🔴 TUTUP`) dan banner promo.
    - Tombol pesan langsung via WhatsApp dengan pesan otomatis.
    - Tombol switch layer di header untuk menampilkan/menyembunyikan UMKM kapan saja.
+   - **Fitur Live UMKM Status & Toast (10 Detik)**:
+     - Muncul toast notifikasi `🏷️ Siap Kirim` atau `🔴 Sedang Tutup` selama 10 detik saat pin UMKM diklik.
+     - **Live Spotlight Ticker**: Peta secara otomatis menampilkan toko warga yang sedang buka dan siap kirim secara berkala. Mengetuk toast langsung memusatkan peta ke toko tersebut dan membuka menu/promonya.
 
 6. **Sistem Keamanan & Portal Login Akses (.yayahay)**:
    - Halaman depan (`index.html`) sebagai portal login terproteksi.
