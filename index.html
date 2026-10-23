@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Login - Klipang Green 2 Monitor</title>
 
-  <!-- Instant Session Check: Jika sudah login, langsung ke .yayahay -->
+  <!-- Instant Session Check: Jika sudah login, langsung ke yayahay.html -->
   <script>
     (function() {
       try {
         var token = sessionStorage.getItem('kg2_auth_token') || localStorage.getItem('kg2_auth_token');
         if (token) {
-          window.location.replace('.yayahay');
+          window.location.replace('yayahay.html');
         }
       } catch (e) {}
     })();
@@ -567,9 +567,9 @@
             localStorage.removeItem('kg2_auth_token');
           }
 
-          // Alihkan ke .yayahay (atau yayahay.html)
+          // Alihkan ke yayahay.html
           setTimeout(() => {
-            window.location.replace('.yayahay');
+            window.location.replace('yayahay.html');
           }, 400);
 
         } else {
