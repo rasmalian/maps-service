@@ -172,6 +172,7 @@ const state = {
   globalSirenActive: false,
   cctvAnimationId: null,
   previewCanvasInterval: null,
+  popupHlsInstance: null,
   hlsInstance: null,
   umkmList: [],
   umkmLayerGroup: null,
@@ -476,6 +477,7 @@ function renderAllMarkers() {
       const popupContent = createCctvPopupHtml(marker);
       leafletMarker.bindPopup(popupContent, { maxWidth: 220, closeButton: false });
       leafletMarker.on('popupopen', () => setupCctvMiniCanvas(marker));
+      leafletMarker.on('popupclose', () => cleanupCctvMiniPopup());
     }
 
     state.leafletMarkers.set(marker.id, leafletMarker);
@@ -847,8 +849,10 @@ function createCctvPopupHtml(marker) {
   return `
     <div class="cctv-preview-card" onclick="openCctvFullscreen('${marker.id}')">
       <div class="cctv-preview-thumb-wrap">
+        <video class="cctv-preview-video hidden" id="popup_video_${marker.id}" playsinline autoplay muted loop></video>
         <canvas class="cctv-preview-canvas" id="popup_canvas_${marker.id}" width="200" height="105"></canvas>
         <span class="cctv-badge-live">${badgeText}</span>
+        <span class="cctv-thumb-status" id="popup_status_${marker.id}">${isRealStream ? 'Menghubungkan...' : 'Simulasi'}</span>
       </div>
       <div class="cctv-preview-title">${marker.name}</div>
       <div class="cctv-preview-hint">
@@ -864,17 +868,91 @@ function createCctvPopupHtml(marker) {
   `;
 }
 
+function cleanupCctvMiniPopup() {
+  if (state.popupHlsInstance) {
+    try {
+      state.popupHlsInstance.destroy();
+    } catch (e) {}
+    state.popupHlsInstance = null;
+  }
+  if (state.previewCanvasInterval) {
+    clearInterval(state.previewCanvasInterval);
+    state.previewCanvasInterval = null;
+  }
+}
+
 function setupCctvMiniCanvas(marker) {
+  cleanupCctvMiniPopup();
+
   setTimeout(() => {
     const canvas = document.getElementById(`popup_canvas_${marker.id}`);
-    if (canvas) {
-      drawSimulatedCameraFrame(canvas, marker, false);
-      clearInterval(state.previewCanvasInterval);
+    const video = document.getElementById(`popup_video_${marker.id}`);
+    const statusLabel = document.getElementById(`popup_status_${marker.id}`);
+    if (!canvas) return;
+
+    // Render frame awal pada canvas
+    drawSimulatedCameraFrame(canvas, marker, false);
+
+    const startCanvasInterval = () => {
+      if (state.previewCanvasInterval) clearInterval(state.previewCanvasInterval);
       state.previewCanvasInterval = setInterval(() => {
         const c = document.getElementById(`popup_canvas_${marker.id}`);
         if (c) drawSimulatedCameraFrame(c, marker, false);
         else clearInterval(state.previewCanvasInterval);
       }, 500);
+    };
+
+    if (marker.streamUrl && video) {
+      if (statusLabel) statusLabel.textContent = 'Menghubungkan...';
+
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          manifestLoadingTimeOut: 6000,
+          levelLoadingTimeOut: 6000
+        });
+        state.popupHlsInstance = hls;
+
+        hls.loadSource(marker.streamUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().then(() => {
+            video.classList.remove('hidden');
+            if (statusLabel) statusLabel.textContent = 'Live Feed';
+          }).catch(() => {
+            video.classList.remove('hidden');
+            if (statusLabel) statusLabel.textContent = 'Live Feed';
+          });
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            video.classList.add('hidden');
+            if (statusLabel) statusLabel.textContent = 'Offline (Simulasi)';
+            startCanvasInterval();
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = marker.streamUrl;
+        video.addEventListener('loadedmetadata', () => {
+          video.play().then(() => {
+            video.classList.remove('hidden');
+            if (statusLabel) statusLabel.textContent = 'Live Feed';
+          }).catch(() => {});
+        });
+        video.addEventListener('error', () => {
+          video.classList.add('hidden');
+          if (statusLabel) statusLabel.textContent = 'Offline (Simulasi)';
+          startCanvasInterval();
+        });
+      } else {
+        startCanvasInterval();
+      }
+    } else {
+      if (statusLabel) statusLabel.textContent = 'Simulasi';
+      startCanvasInterval();
     }
   }, 50);
 }
@@ -883,6 +961,9 @@ function setupCctvMiniCanvas(marker) {
 window.openCctvFullscreen = function(markerId) {
   const marker = state.markers.find(m => m.id === markerId);
   if (!marker) return;
+
+  // Tutup dan bersihkan player HLS thumbnail agar tidak jalan dobel dengan fullscreen
+  cleanupCctvMiniPopup();
 
   state.activeCctvMarkerId = markerId;
   const modal = document.getElementById('cctvFullModal');
