@@ -3,377 +3,593 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Klipang Green 2 - Map Monitor</title>
+  <title>Login - Klipang Green 2 Monitor</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
-  <!-- Font & Icons -->
+  <!-- Instant Session Check: Jika sudah login, langsung ke .yayahay -->
+  <script>
+    (function() {
+      try {
+        var token = sessionStorage.getItem('kg2_auth_token') || localStorage.getItem('kg2_auth_token');
+        if (token) {
+          window.location.replace('.yayahay');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=6.4">
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --accent: #3b82f6;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --danger-border: rgba(239, 68, 68, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: rgba(2, 6, 23, 0.7);
+      --input-border: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo-badge {
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 10px 25px -5px var(--primary-glow);
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .logo-badge svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .status-pulse {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 12px;
+      height: 12px;
+      background: #10b981;
+      border: 2px solid var(--bg-dark);
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 30px 26px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e2e8f0;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .card-title svg {
+      color: var(--primary);
+    }
+
+    .alert-box {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: #fca5a5;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.4;
+      transition: all 0.2s ease;
+    }
+
+    .alert-box.hidden {
+      display: none;
+    }
+
+    .alert-box.success {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+    }
+
+    .alert-box svg {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 1px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 13px 44px 13px 44px;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .input-wrapper input::placeholder {
+      color: #475569;
+    }
+
+    .btn-toggle-pass {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      border-radius: 8px;
+      transition: color 0.2s;
+    }
+
+    .btn-toggle-pass:hover {
+      color: var(--text-main);
+    }
+
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .remember-label input[type="checkbox"] {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px -4px var(--primary-glow);
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-submit:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      filter: grayscale(30%);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .btn-submit.loading .spinner {
+      display: block;
+    }
+
+    .btn-submit.loading .btn-text,
+    .btn-submit.loading svg:not(.spinner) {
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .card-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .footer-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+    }
+
+    /* Shake animation saat error */
+    .shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- App Wrapper -->
-  <div id="app">
+  <div class="login-container">
     
-    <!-- Top Navigation Header -->
-    <header class="app-header" id="appHeader">
-      <div class="header-left">
-        <div class="logo-badge">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-        </div>
-        <div>
-          <h1 class="header-title" id="estateTitle">Klipang Green 2</h1>
-          <p class="header-subtitle"><span class="status-dot"></span> Sistem Aktif &bull; <span id="markerCountText">0 Marker</span> &bull; <span id="umkmCountText">0 UMKM</span></p>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <button id="btnToggleUmkm" class="icon-pill-btn active" title="Tampilkan/Sembunyikan UMKM & Kuliner" aria-label="Toggle UMKM">
-          <span class="pill-icon">🛍️</span>
-          <span class="pill-text">UMKM</span>
-          <span id="umkmBadgeCount" class="badge-count">0</span>
-        </button>
-        <button id="btnGps" class="icon-btn" title="Lokasi Saya" aria-label="Lokasi Saya">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-          </svg>
-        </button>
-        <button id="btnListMarkers" class="icon-btn" title="Daftar Marker" aria-label="Daftar Marker">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="8" y1="6" x2="21" y2="6"></line>
-            <line x1="8" y1="12" x2="21" y2="12"></line>
-            <line x1="8" y1="18" x2="21" y2="18"></line>
-            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Floating Toast Notification -->
-    <div id="toastNotification" class="toast-notification hidden">
-      <span id="toastIcon">📡</span>
-      <span id="toastMessage">Pesan</span>
-    </div>
-
-    <!-- Global Emergency Alert Banner (Displayed when hazard alarm is active) -->
-    <div id="emergencyBanner" class="emergency-banner hidden">
-      <div class="banner-content">
-        <div class="banner-pulse-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </div>
-        <div class="banner-text">
-          <strong id="emergencyTitle">ALARM BAHAYA DIAKTIFKAN!</strong>
-          <span id="emergencyDesc">Lokasi: Pos Utama</span>
-        </div>
-      </div>
-      <button id="btnMuteGlobal" class="btn-mute-global">
-        Hentikan Sirine
-      </button>
-    </div>
-
-    <!-- Instruction Floating Badge when in Add-Marker Mode -->
-    <div id="crosshairGuide" class="crosshair-guide hidden">
-      <span>🎯 Sentuh titik di peta untuk meletakkan marker</span>
-      <button id="btnManualCoord" class="btn-manual-coord" type="button" style="background:#2563eb; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; margin-left:8px; font-weight:600;">Input Koordinat</button>
-      <button id="btnCancelAddMode" class="btn-cancel-mini">&times;</button>
-    </div>
-
-    <!-- Map Canvas Element -->
-    <div id="map"></div>
-
-    <!-- Floating Action Buttons (FAB) at Bottom Right -->
-    <div class="fab-group">
-      <button id="btnAddMarker" class="fab-btn primary" title="Tambah Marker Baru">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
+    <!-- Header Brand -->
+    <div class="brand-header">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
-        <span class="fab-label">Tambah</span>
-      </button>
+        <span class="status-pulse"></span>
+      </div>
+      <h1 class="brand-title">Klipang Green 2</h1>
+      <p class="brand-subtitle">Sistem Keamanan & Monitoring Lingkungan</p>
     </div>
 
-    <!-- Bottom Sheet / Modal: Minimal Action Panel Alarm -->
-    <div id="alarmModal" class="modal-backdrop hidden">
-      <div class="bottom-sheet minimal-alarm-sheet">
-        <div class="sheet-handle"></div>
+    <!-- Login Card -->
+    <div class="login-card" id="loginCard">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Portal Akses Petugas</span>
+      </div>
 
-        <!-- Header Ringkas: Nama & Tombol Aksi Kanan -->
-        <div class="minimal-sheet-header">
-          <div class="alarm-title-group">
-            <h3 class="target-name" id="alarmModalName">Pos Alarm</h3>
-            <span id="alarmStatusBadge" class="status-chip-compact normal">Standby</span>
-            <span id="alarmModalCoords" style="display:none;"></span>
+      <!-- Alert Notification -->
+      <div id="loginAlert" class="alert-box hidden" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span id="alertText">Username atau password salah!</span>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" autocomplete="on">
+        
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              placeholder="Masukkan username" 
+              required 
+              autocapitalize="none"
+              autocomplete="username"
+            >
           </div>
-          <div class="header-actions">
-            <button id="btnDeleteAlarmMarker" class="btn-icon-subtle" title="Hapus Marker Ini">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="Masukkan password" 
+              required
+              autocomplete="current-password"
+            >
+            <button type="button" class="btn-toggle-pass" id="btnTogglePass" title="Tampilkan/Sembunyikan Password" aria-label="Toggle Password">
+              <svg id="eyeIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
-            <button class="btn-close-modal" id="btnCloseAlarmModal">&times;</button>
           </div>
         </div>
 
-        <!-- Tombol-tombol Langsung Tanpa Teks Panjang -->
-        <div class="minimal-alarm-body">
-          <!-- Tombol Ping Test -->
-          <button id="btnPingAlarm" class="btn-ping-minimal">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            </svg>
-            <span>Uji Bip (Ping 3 Detik)</span>
-          </button>
-
-          <!-- 6 Tombol Bahaya & Stop (Grid 2 Kolom) -->
-          <div class="minimal-hazard-grid">
-            <button class="hazard-btn hazard-animal" data-hazard="wild_animal" data-title="Hewan Liar">
-              <span class="hazard-icon">🐗</span>
-              <span class="hazard-label">Hewan Liar</span>
-            </button>
-
-            <button class="hazard-btn hazard-fire" data-hazard="fire" data-title="Kebakaran">
-              <span class="hazard-icon">🔥</span>
-              <span class="hazard-label">Kebakaran</span>
-            </button>
-
-            <button class="hazard-btn hazard-flood" data-hazard="flood" data-title="Kebanjiran">
-              <span class="hazard-icon">🌊</span>
-              <span class="hazard-label">Kebanjiran</span>
-            </button>
-
-            <button class="hazard-btn hazard-theft" data-hazard="theft" data-title="Pencurian">
-              <span class="hazard-icon">🥷</span>
-              <span class="hazard-label">Pencurian</span>
-            </button>
-
-            <button class="hazard-btn hazard-other" data-hazard="other" data-title="Bahaya Lain">
-              <span class="hazard-icon">⚠️</span>
-              <span class="hazard-label">Bahaya Lain</span>
-            </button>
-
-            <button id="btnStopAlarm" class="btn-stop-minimal">
-              <span class="hazard-icon">⏹️</span>
-              <span class="hazard-label">Matikan Sirine</span>
-            </button>
-          </div>
+        <div class="form-options">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMe" checked>
+            <span>Ingat saya di perangkat ini</span>
+          </label>
         </div>
+
+        <button type="submit" class="btn-submit" id="btnLogin">
+          <div class="spinner"></div>
+          <span class="btn-text">Masuk ke Sistem</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+
+      </form>
+
+      <div class="card-footer">
+        <span class="footer-dot"></span>
+        <span>Terkoneksi aman ke Cloudflare Edge Worker</span>
       </div>
-    </div>
 
-    <!-- Fullscreen Modal: CCTV Stream Viewer -->
-    <div id="cctvFullModal" class="cctv-full-backdrop hidden">
-      <div class="cctv-full-container">
-        <!-- CCTV Top Info Bar -->
-        <div class="cctv-topbar">
-          <div class="cctv-info-left">
-            <span class="rec-badge"><span class="rec-dot"></span> LIVE REC</span>
-            <span class="cctv-feed-name" id="cctvFullTitle">CCTV Gerbang Utama</span>
-          </div>
-          <div class="cctv-info-right">
-            <span class="cctv-clock font-mono" id="cctvClock">--:--:--</span>
-            <button class="btn-cctv-close" id="btnCloseCctvFull">&times;</button>
-          </div>
-        </div>
-
-        <!-- Video Player / Simulated Stream Feed -->
-        <div class="cctv-video-wrap">
-          <canvas id="cctvLiveCanvas" width="854" height="480"></canvas>
-          <div class="cctv-osd-overlay">
-            <div class="osd-top">
-              <span id="osdCamId">CAM-01 [HD]</span>
-              <span id="osdBitrate">4096 kbps &bull; 30 FPS</span>
-            </div>
-            <div class="osd-center-grid"></div>
-            <div class="osd-bottom">
-              <span id="osdLocation">KLIPANG GREEN 2</span>
-              <span id="osdDate" class="font-mono">2026/10/21</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- CCTV Controls Bar -->
-        <div class="cctv-controls">
-          <div class="cctv-mode-tags">
-            <span class="pill-tag active">Kamera Aktif</span>
-            <span class="pill-tag">Inframerah / Auto</span>
-          </div>
-          <div class="cctv-action-btns">
-            <button id="btnSnapshotCctv" class="btn-cctv-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-              Foto Snapshot
-            </button>
-            <button id="btnDeleteCctvMarker" class="btn-cctv-pill danger">Hapus Marker</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal: Form Tambah Marker Baru -->
-    <div id="addMarkerModal" class="modal-backdrop hidden">
-      <div class="dialog-box">
-        <div class="dialog-header">
-          <h3>Tambah Marker Baru</h3>
-          <button class="btn-close-modal" id="btnCloseAddModal">&times;</button>
-        </div>
-        <form id="addMarkerForm" class="dialog-form">
-          <div class="form-group">
-            <label for="markerName">Nama / Lokasi Marker:</label>
-            <input type="text" id="markerName" placeholder="Contoh: Pos Satpam Blok B / CCTV Gang 3" required>
-          </div>
-
-          <div class="form-group">
-            <label>Pilih Tipe Marker:</label>
-            <div class="type-selector-grid">
-              <label class="type-card selected" id="typeCardAlarm">
-                <input type="radio" name="markerType" value="alarm" checked>
-                <div class="type-card-inner">
-                  <div class="type-icon alarm">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                  </div>
-                  <strong>Marker Alarm</strong>
-                  <span>Ping & 5 Tipe Sirine Bahaya</span>
-                </div>
-              </label>
-
-              <label class="type-card" id="typeCardCctv">
-                <input type="radio" name="markerType" value="cctv">
-                <div class="type-card-inner">
-                  <div class="type-icon cctv">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M23 7l-7 5 7 5V7z"></path>
-                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                    </svg>
-                  </div>
-                  <strong>Marker CCTV</strong>
-                  <span>Preview Mini & Full View</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div class="form-group hidden" id="cctvSettingsWrap">
-            <label for="cctvChannel">Preset Simulasi / Kamera:</label>
-            <select id="cctvChannel">
-              <option value="gate">Gerbang Masuk (Traffic & Palang)</option>
-              <option value="street">Jalan Utama / Klipang Green 2</option>
-              <option value="corner">Sudut Blok / Tikungan CCTV</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="margin-top: 10px;">
-            <label>Titik Koordinat (Bisa diketik / paste):</label>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <div style="flex: 1;">
-                <label for="markerLat" style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 3px;">Latitude:</label>
-                <input type="number" step="any" id="markerLat" required placeholder="-7.050..." style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 13px; font-family: monospace;">
-              </div>
-              <div style="flex: 1;">
-                <label for="markerLng" style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 3px;">Longitude:</label>
-                <input type="number" step="any" id="markerLng" required placeholder="110.48..." style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 13px; font-family: monospace;">
-              </div>
-            </div>
-          </div>
-
-          <div class="dialog-actions">
-            <button type="button" class="btn-cancel" id="btnCancelAdd">Batal</button>
-            <button type="submit" class="btn-save">Simpan Marker</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Modal: List Markers & Settings -->
-    <div id="listModal" class="modal-backdrop hidden">
-      <div class="dialog-box">
-        <div class="dialog-header">
-          <h3>Daftar Marker Terpasang</h3>
-          <button class="btn-close-modal" id="btnCloseListModal">&times;</button>
-        </div>
-        <div class="dialog-body">
-          <div id="markerItemsList" class="marker-items-list">
-            <!-- Dynamically populated -->
-          </div>
-          <div class="marker-list-footer">
-            <button id="btnResetDefaultMarkers" class="btn-reset-markers">
-              🔄 Reset ke Marker Contoh Bawaan
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom Sheet / Modal: Detail UMKM & Kuliner Warga -->
-    <div id="umkmModal" class="modal-backdrop hidden">
-      <div class="bottom-sheet umkm-sheet">
-        <div class="sheet-handle"></div>
-
-        <div class="minimal-sheet-header">
-          <div class="alarm-title-group">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-              <span id="umkmCategoryBadge" class="umkm-cat-badge">🍔 Kuliner</span>
-              <span id="umkmStatusBadge" class="status-chip-compact normal">🟢 BUKA</span>
-            </div>
-            <h3 class="target-name" id="umkmModalName">Nama Usaha</h3>
-          </div>
-          <div class="header-actions">
-            <button class="btn-close-modal" id="btnCloseUmkmModal">&times;</button>
-          </div>
-        </div>
-
-        <div class="umkm-modal-body">
-          <div id="umkmPromoBanner" class="umkm-promo-banner hidden">
-            <span class="promo-icon">🏷️</span>
-            <span id="umkmPromoText">Promo Diskon</span>
-          </div>
-
-          <div id="umkmImageWrap" class="umkm-image-wrap hidden">
-            <img id="umkmModalImage" src="" alt="Foto Produk / Usaha" onerror="this.parentElement.classList.add('hidden')">
-          </div>
-
-          <div class="umkm-detail-box">
-            <label class="umkm-section-label">Menu & Layanan:</label>
-            <p id="umkmModalDesc" class="umkm-desc-text">Deskripsi menu atau layanan</p>
-          </div>
-
-          <div class="umkm-action-group">
-            <a id="btnUmkmWhatsapp" href="#" target="_blank" rel="noopener noreferrer" class="btn-wa-order">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.19 8.19 0 0 1-5.82 2.42c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.23-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.07-.1-.23-.17-.48-.29z"/>
-              </svg>
-              <span>Chat & Pesan via WhatsApp</span>
-            </a>
-          </div>
-        </div>
-      </div>
     </div>
 
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Main Application Script (v6.4 with 1:1 Square Photo Modal View) -->
-  <script src="app.js?v=6.4"></script>
+  <script>
+    // Konfigurasi Endpoint Worker Cloudflare
+    const AUTH_ENDPOINT = 'https://summer-rt9.demigod1337.workers.dev/auth';
+
+    const loginForm = document.getElementById('loginForm');
+    const loginCard = document.getElementById('loginCard');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    const btnLogin = document.getElementById('btnLogin');
+    const btnTogglePass = document.getElementById('btnTogglePass');
+    const eyeIcon = document.getElementById('eyeIcon');
+    const loginAlert = document.getElementById('loginAlert');
+    const alertText = document.getElementById('alertText');
+
+    // Toggle Tampilkan / Sembunyikan Password
+    btnTogglePass.addEventListener('click', () => {
+      const isPass = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isPass ? 'text' : 'password');
+      if (isPass) {
+        eyeIcon.innerHTML = `
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+      } else {
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        `;
+      }
+    });
+
+    function showAlert(msg, isSuccess = false) {
+      alertText.textContent = msg;
+      loginAlert.className = isSuccess ? 'alert-box success' : 'alert-box';
+      loginAlert.classList.remove('hidden');
+
+      if (!isSuccess) {
+        loginCard.classList.remove('shake');
+        void loginCard.offsetWidth; // Trigger reflow
+        loginCard.classList.add('shake');
+      }
+    }
+
+    function hideAlert() {
+      loginAlert.classList.add('hidden');
+    }
+
+    // Submit Handler
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username || !password) {
+        showAlert('Silakan masukkan username dan password.');
+        return;
+      }
+
+      // Set Loading State
+      btnLogin.disabled = true;
+      btnLogin.classList.add('loading');
+
+      try {
+        const response = await fetch(AUTH_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.ok) {
+          showAlert('Login berhasil! Mengalihkan...', true);
+
+          // Simpan Token Sesi
+          const storage = rememberMeCheckbox.checked ? localStorage : sessionStorage;
+          storage.setItem('kg2_auth_token', data.token || 'authenticated');
+          storage.setItem('kg2_auth_user', data.user || username);
+
+          // Jika pilih simpan di salah satu, bersihkan storage satunya agar rapi
+          if (rememberMeCheckbox.checked) {
+            sessionStorage.removeItem('kg2_auth_token');
+          } else {
+            localStorage.removeItem('kg2_auth_token');
+          }
+
+          // Alihkan ke .yayahay (atau yayahay.html)
+          setTimeout(() => {
+            window.location.replace('.yayahay');
+          }, 400);
+
+        } else {
+          const errMsg = data.message || (response.status === 401 
+            ? 'Username atau password salah!' 
+            : 'Gagal melakukan verifikasi akun.');
+          showAlert(errMsg);
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+
+      } catch (err) {
+        console.error('Auth request error:', err);
+        showAlert('Gagal terhubung ke server Cloudflare. Pastikan koneksi internet aktif.');
+      } finally {
+        btnLogin.disabled = false;
+        btnLogin.classList.remove('loading');
+      }
+    });
+  </script>
+
 </body>
 </html>

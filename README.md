@@ -46,6 +46,13 @@ Aplikasi peta monitoring lingkungan Klipang Green 2 berbasis web yang mobile-fri
    - Tombol pesan langsung via WhatsApp dengan pesan otomatis.
    - Tombol switch layer di header untuk menampilkan/menyembunyikan UMKM kapan saja.
 
+6. **Sistem Keamanan & Portal Login Akses (.yayahay)**:
+   - Halaman depan (`index.html`) sebagai portal login terproteksi.
+   - Kredensial username & password diverifikasi secara aman via endpoint Cloudflare Worker (`/auth`) menggunakan tanda tangan kriptografis HMAC-SHA256.
+   - **Nol Kredensial di GitHub**: Username dan password disimpan di Cloudflare Worker Environment Variables / Secrets (`AUTH_USER` & `AUTH_PASS`), sehingga 100% aman dan tidak pernah masuk git commit.
+   - Sesi login terproteksi disimpan di browser (`sessionStorage` / `localStorage`).
+   - Dashboard monitoring utama berjalan di route `.yayahay` (`yayahay.html`) dengan proteksi redirect otomatis jika belum login dan tombol Logout terintegrasi.
+
 ---
 
 ## Cara Upload ke GitHub & Langsung Live Gratis

@@ -1308,10 +1308,25 @@ function locateUserGPS() {
 
 // --- Event Listeners Setup ---
 function setupEventListeners() {
-  // GPS & List Buttons
+  // GPS, List & Logout Buttons
   document.getElementById('btnGps').addEventListener('click', locateUserGPS);
   document.getElementById('btnListMarkers').addEventListener('click', openListModal);
   document.getElementById('btnCloseListModal').addEventListener('click', closeListModal);
+
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      if (confirm('Keluar dari sistem monitoring Klipang Green 2?')) {
+        try {
+          sessionStorage.removeItem('kg2_auth_token');
+          sessionStorage.removeItem('kg2_auth_user');
+          localStorage.removeItem('kg2_auth_token');
+          localStorage.removeItem('kg2_auth_user');
+        } catch (e) {}
+        window.location.replace('index.html');
+      }
+    });
+  }
 
   // UMKM Toggle & Modal
   const btnToggleUmkm = document.getElementById('btnToggleUmkm');
